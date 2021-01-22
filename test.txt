@@ -1,7 +1,14 @@
-This is a test of GitHub branches.
-Here are some colors:
+  This is a test of GitHub branches.
+  Here are some colors:
 
-Blue 
-Yellow
-Red
-Green
+  Blue 
+  Yellow
+  Red
+  Green
+
+Also, here are some cities:
+
+Stockholm
+Oslo
+Madrid
+Berlin

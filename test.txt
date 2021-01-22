@@ -3,8 +3,10 @@
 
   Blue 
   Yellow
+  Purple
   Red
   Green
+  Pink
 
 Also, here are some cities:
 

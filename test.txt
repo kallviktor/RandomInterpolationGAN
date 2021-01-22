@@ -3,3 +3,5 @@ Here are some colors:
 
 Blue 
 Yellow
+Red
+Green

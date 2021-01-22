@@ -8,3 +8,5 @@ Also, hera are some cities:
 
 Stockholm
 Oslo
+Madrid
+Berlin

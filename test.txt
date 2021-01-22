@@ -12,3 +12,8 @@ Stockholm
 Oslo
 Madrid
 Berlin
+
+Here are cool mountains:
+
+Mount Everest
+Kilimanjaro

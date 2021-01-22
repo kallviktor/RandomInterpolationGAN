@@ -15,6 +15,7 @@ Oslo
 Madrid
 Berlin
 Karlstad
+NewYork
 
 Here are cool mountains:
 

@@ -26,13 +26,13 @@ class dcgan(object):
 		dfc_dim: (optional) Dimension of D units for fully connected layer. [1024]
 		c_dim: (optional) Dimension of image color. For grayscale input, set to 1. [3]
 		"""
-		self.config = config
+
 		self.build_model()
 
 	def build_model(self,config):
 
 		self.D = self.discriminator(config)
-		self.G = self.generator()
+		self.G = self.generator(config)
 
 		self.GAN = Sequential()
 		self.GAN.add(self.G)
@@ -92,8 +92,8 @@ class dcgan(object):
 		G.add(Conv2DTranspose(filters=config.c_dim,strides=2,padding='same',kernel=5))
 		G.add(tanh())
 
-
 		return G
+
 
 	def train(self,config):
 
@@ -104,14 +104,45 @@ class dcgan(object):
 		elif config.dataset == 'celebA':
 			(X_train, y_train), (X_test, y_test) = load_celebA()
 
+		d_optim = Adam(learning_rate=config.learning_rate, beta_1=config.beta_1)
+		g_optim = Adam(learning_rate=config.learning_rate, beta_1=config.beta_1)
 
-		batches = int(len(X_train)/batch_size)		#int always rounds down --> no problem with running out of data
+		loss = 'binary_crossentropy'
 
-		for epoch in range(epochs):
-			for batch in range(batches):
+		
 
-				batch_images = self.data_X[idx*config.batch_size:(idx+1)*config.batch_size]
-				batch_labels = self.data_y[idx*config.batch_size:(idx+1)*config.batch_size]
+		batches = int(len(X_train)/config.batch_size)		#int always rounds down --> no problem with running out of data
+
+		counter = 1
+
+		for epoch in range(config.epochs):
+			for batch in range(config.batches):
+
+				batch_X_real = X_train[batch*config.batch_size:(batch+1)*config.batch_size]
+				z = np.random.multivariate_normal(0,1,size=(config.batch_size,config.z_dim))
+				batch_X_fake = self.G.predict(z)
+				#batch_y = y_train[batch*config.batch_size:(batch+1)*config.batch_size]
+
+				#maybe normalize values in X?
+
+
+				#Update D network
+
+				#Update G network
+
+				#Update G network again according to https://github.com/carpedm20/DCGAN-tensorflow.git
+
+				if np.mod(counter,config.sample_freq) == 0:
+
+					#print status and save images
+
+
+
+				counter += 1
+
+
+
+
 
 
 

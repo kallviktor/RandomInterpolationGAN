@@ -104,12 +104,16 @@ class dcgan(object):
 		elif config.dataset == 'celebA':
 			(X_train, y_train), (X_test, y_test) = load_celebA()
 
-		d_optim = Adam(learning_rate=config.learning_rate, beta_1=config.beta_1)
-		g_optim = Adam(learning_rate=config.learning_rate, beta_1=config.beta_1)
+		D_optim = Adam(learning_rate=config.learning_rate, beta_1=config.beta_1)
+		G_optim = Adam(learning_rate=config.learning_rate, beta_1=config.beta_1)
+		loss_f = 'binary_crossentropy'
 
-		loss = 'binary_crossentropy'
+		#Compile models
+		self.D.compile(loss=loss_f,optimizer=D_optim)
+		self.D.trainable = True
+		self.G.compile(loss=loss_f,optimizer=G_optim)
 
-		
+
 
 		batches = int(len(X_train)/config.batch_size)		#int always rounds down --> no problem with running out of data
 
@@ -119,26 +123,40 @@ class dcgan(object):
 			for batch in range(config.batches):
 
 				batch_X_real = X_train[batch*config.batch_size:(batch+1)*config.batch_size]
-				z = np.random.multivariate_normal(0,1,size=(config.batch_size,config.z_dim))
+				batch_z = np.random.multivariate_normal(0,1,size=(config.batch_size,config.z_dim))
 				batch_X_fake = self.G.predict(z)
-				#batch_y = y_train[batch*config.batch_size:(batch+1)*config.batch_size]
+				batch_X = np.concatenate((batch_X_real,batch_X_fake))
+
+				batch_yd = np.concatenate((np.ones((config.batch_size)),np.zeros((config.batch_size))))
+				batch_yg = np.ones((config.batch_size))
 
 				#maybe normalize values in X?
 
 
 				#Update D network
+				D_loss = self.D.train_on_batch(batch_X, batch_yd)
 
 				#Update G network
+				G_loss = self.GAN.train_on_batch(batch_z, batch_yg)
 
 				#Update G network again according to https://github.com/carpedm20/DCGAN-tensorflow.git
+				G_loss = self.GAN.train_on_batch(batch_z, batch_yg)
 
+
+				#Save losses to vectors in order to plot
+
+
+				#Print status and save images for each config.sample_freq iterations
 				if np.mod(counter,config.sample_freq) == 0:
 
-					#print status and save images
-
+					
+					print('Epoch: {}/{} | Batch: {}/{} | D-loss {} | G-loss {}'.format(epoch,config.epochs,batch,batches,D_loss,G_loss))
 
 
 				counter += 1
+
+		print('\n' * 2)
+		print('Training finished!')
 
 
 

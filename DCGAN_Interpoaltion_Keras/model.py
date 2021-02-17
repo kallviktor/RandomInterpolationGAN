@@ -6,8 +6,11 @@ from keras.layers.convolutional import UpSampling2D, Conv2D, MaxPooling2D, Conv2
 from keras.optimizers import SGD, Adam
 from keras.datasets import mnist
 
+
 import numpy as np
 import math
+import time
+import datetime
 
 from utils import load_mnist, load_lines, load_celebA
 
@@ -66,8 +69,8 @@ class dcgan(object):
 		D.add(Dense(1))
 		D.add(Activation('sigmoid'))
 
-		print('D:')
-		D.summary()
+		#print('D:')
+		#D.summary()
 
 		return D
 
@@ -98,8 +101,8 @@ class dcgan(object):
 		G.add(Conv2DTranspose(filters=config.c_dim,strides=2,padding='same',kernel_size=5))
 		G.add(Activation('tanh'))
 
-		print('G:')
-		G.summary()
+		#print('G:')
+		#G.summary()
 
 		return G
 
@@ -130,11 +133,13 @@ class dcgan(object):
 		counter = 1
 
 		print('\n' * 1)
-		print('='*42)
-		print('-'*10,'Training initialized.','-'*10)
-		print('='*42)
+		print('='*65)
+		print('-'*21,'Training initialized','-'*22)
+		print('='*65)
 		print('\n' * 2)
 
+		start_time = time.time()
+		t0 = start_time
 		for epoch in range(config.epochs):
 			for batch in range(batches):
 
@@ -169,16 +174,17 @@ class dcgan(object):
 				#Print status and save images for each config.sample_freq iterations
 				if np.mod(counter,config.sample_freq) == 0:
 
-					
-					print('Epoch: {}/{} | Batch: {}/{} | D-loss {} | G-loss {}'.format(epoch+1,config.epochs,batch+1,batches,D_loss,G_loss))
-
+					dt = round(time.time()-t0,1)
+					ET = datetime.timedelta(seconds=round(time.time()-start_time,0))
+					t0 = time.time()
+					print('Epoch: {}/{} | Batch: {}/{} | ET: {} | dt: {}s | D-loss: {:1.2e} | G-loss: {:1.2e}'.format(epoch+1,config.epochs,batch+1,batches,ET,dt,D_loss,G_loss))
 
 				counter += 1
 
 		print('\n' * 2)
-		print('='*38)
-		print('-'*10,'Training complete.','-'*10)
-		print('='*38)
+		print('='*65)
+		print('-'*23,'Training complete','-'*23)
+		print('='*65)
 
 
 

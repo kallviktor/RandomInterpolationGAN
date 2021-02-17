@@ -1,8 +1,8 @@
 from keras.models import Sequential
-from keras.layers import Dense, Reshape, LeakyReLU, BatchNormalization as BN
+from keras.layers import Dense, Reshape, ReLU, LeakyReLU, BatchNormalization as BN
 from keras.layers.core import Activation, Flatten
 from keras.layers.normalization import BatchNormalization
-from keras.layers.convolutional import UpSampling2D, Conv2D, MaxPooling2D
+from keras.layers.convolutional import UpSampling2D, Conv2D, MaxPooling2D, Conv2DTranspose, tanh, sigmoid
 from keras.optimizers import SGD, Adam
 from keras.datasets import mnist
 
@@ -64,35 +64,44 @@ class dcgan(object):
 
 		D.add(Flatten())
 		D.add(Dense(1))
-		D.add(Activation('sigmoid'))
+		D.add(sigmoid())
 
 		return D
 
-	def generator(self):
+	def generator(self,config):
 
-		#G = Sequential()
-		#G.add(Dense(input_dim=self.config.z_dim, output_dim=1024))
-		#G.add(Activation('tanh'))
-		#G.add(Dense(128*7*7))
-		#G.add(BatchNormalization())
-		#G.add(Activation('tanh'))
-		#G.add(Reshape((7, 7, 128), input_shape=(128*7*7,)))
-		#G.add(UpSampling2D(size=(2, 2)))
-		#G.add(Conv2D(64, (5, 5), padding='same'))
-		#G.add(Activation('tanh'))
-		#G.add(UpSampling2D(size=(2, 2)))
-		#G.add(Conv2D(1, (5, 5), padding='same'))
-		#G.add(Activation('tanh'))
+		G = Sequential()
+
+		G.add(Dense(input_dim=config.z_dim, output_dim=config.gf_dim*8*4*4))
+		G.add(Reshape(config.gf_dim*8,4,4))
+		G.add(BN(momentum=0.9,epsilon=1e-5))
+		G.add(ReLU())
+
+		G.add(Conv2DTranspose(filters=config.gf_dim*4,strides=2,padding='same',kernel=5))
+		G.add(BN(momentum=0.9,epsilon=1e-5))
+		G.add(ReLU())
+
+		G.add(Conv2DTranspose(filters=config.gf_dim*2,strides=2,padding='same',kernel=5))
+		G.add(BN(momentum=0.9,epsilon=1e-5))
+		G.add(ReLU())
+
+		G.add(Conv2DTranspose(filters=config.gf_dim,strides=2,padding='same',kernel=5))
+		G.add(BN(momentum=0.9,epsilon=1e-5))
+		G.add(ReLU())
+
+		G.add(Conv2DTranspose(filters=config.c_dim,strides=2,padding='same',kernel=5))
+		G.add(tanh())
+
 
 		return G
 
 	def train(self,config):
 
-		if dataset == 'mnist':
+		if config.dataset == 'mnist':
 			(X_train, y_train), (X_test, y_test) = load_mnist()
-		elif dataset == 'lines':
+		elif config.dataset == 'lines':
 			(X_train, y_train), (X_test, y_test) = load_lines()
-		elif dataset == 'celebA':
+		elif config.dataset == 'celebA':
 			(X_train, y_train), (X_test, y_test) = load_celebA()
 
 

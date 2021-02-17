@@ -1,7 +1,10 @@
+import os
+import time
+
 class model_config(object):
 	def __init__(self, dataset='mnist',loadmodel=False,interpolation=False,epochs=100,batch_size=64,
 						z_dim=100,gf_dim=64,df_dim=64,gfc_dim=1024,dfc_dim=1024,c_dim=1,learning_rate=0.0002,
-						beta_1 = 0.5,sample_freq=200):
+						beta_1 = 0.5,progress_freq=200,out_dir='/out',load_dir='/nodir'):
 
 		"""
 			Args:
@@ -41,23 +44,13 @@ class model_config(object):
 
 
 
-		# create/load model specific setup
-		if loadmodel:
-
-			self.loadmodel = True
-			self.load_dir = 'put dir here'
-
-		else:
-
-			self.loadmodel = False
-			self.save_dir = 'put dir here'
+		
 
 
 		# general setup
-
 		self.learning_rate = learning_rate
 		self.beta_1 = beta_1
-		self.sample_freq = sample_freq
+		self.progress_freq = progress_freq
 		self.interpolation = interpolation
 		self.batch_size = 	batch_size
 		self.epochs = 		epochs
@@ -68,4 +61,19 @@ class model_config(object):
 		self.dfc_dim = 		dfc_dim
 		self.c_dim = 		c_dim
 
-		self.out_dir = 		'put dir here' 
+
+
+		# create/load model specific setup
+		self.curr_dir = os.getcwd()
+		self.out_dir = 	self.curr_dir+out_dir 
+
+		if loadmodel:
+
+			self.loadmodel = True
+			self.load_dir = load_dir
+
+		else:
+
+			self.loadmodel = False
+			self.save_dir = self.out_dir+'/'+time.strftime('%Y%m%d-%H%M')+'_'+self.dataset
+		

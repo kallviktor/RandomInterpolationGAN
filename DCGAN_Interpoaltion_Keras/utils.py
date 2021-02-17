@@ -1,6 +1,9 @@
 from keras.datasets import mnist
 import math
 import numpy as np
+import time
+import datetime
+import os
 
 def load_mnist():
 	(X_train, y_train), (X_test, y_test) = mnist.load_data()
@@ -21,3 +24,34 @@ def load_celebA():
 
 def conv_out_size_same(size, stride):
   return int(math.ceil(float(size) / float(stride)))
+
+def print_training_progress(config,epoch,batch,batches,D_loss,G_loss,start_time,t0):
+
+	dt = round(time.time()-t0,1)
+	ET = datetime.timedelta(seconds=round(time.time()-start_time,0))
+	print('Epoch: {}/{} | Batch: {}/{} | ET: {} | dt: {}s | D-loss: {:1.2e} | G-loss: {:1.2e}'.format(epoch+1,config.epochs,batch+1,batches,ET,dt,D_loss,G_loss))
+
+def print_training_initialized():
+	print('\n' * 1)
+	print('='*65)
+	print('-'*21,'Training initialized','-'*22)
+	print('='*65)
+	print('\n' * 1)
+
+def print_training_complete():
+	print('\n' * 1)
+	print('='*65)
+	print('-'*23,'Training complete','-'*23)
+	print('='*65)
+
+def save_model(model,config):
+
+	if not os.path.exists(config.out_dir):
+		os.makedirs(config.out_dir)
+
+	if not os.path.exists(config.save_dir):
+		os.makedirs(config.save_dir)
+
+	model.save(save_dir+'/{}_{}d_{}ep.h5'.format(config.dataset,config.z_dim,config.epochs))
+
+

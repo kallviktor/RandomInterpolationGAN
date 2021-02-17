@@ -11,8 +11,9 @@ import numpy as np
 import math
 import time
 import datetime
+import os
 
-from utils import load_mnist, load_lines, load_celebA
+from utils import * # load_mnist, load_lines, load_celebA, print_training_progress, print_training_initialized, print_training_complete
 
 
 class dcgan(object):
@@ -126,17 +127,11 @@ class dcgan(object):
 		self.G.compile(loss=loss_f,optimizer=G_optim)
 		self.GAN.compile(loss=loss_f,optimizer=G_optim)
 
-
-
 		batches = int(len(X_train)/config.batch_size)		#int always rounds down --> no problem with running out of data
 
 		counter = 1
 
-		print('\n' * 1)
-		print('='*65)
-		print('-'*21,'Training initialized','-'*22)
-		print('='*65)
-		print('\n' * 2)
+		print_training_initialized()
 
 		start_time = time.time()
 		t0 = start_time
@@ -146,8 +141,6 @@ class dcgan(object):
 				batch_X_real = X_train[batch*config.batch_size:(batch+1)*config.batch_size][np.newaxis].transpose(1,2,3,0)
 				batch_z = np.random.normal(0,1,size=(config.batch_size,config.z_dim))
 				batch_X_fake = self.G.predict(batch_z)
-				#print(batch_X_real[np.newaxis].transpose(1,2,3,0).shape)
-				#print(batch_X_fake[:,:,:,0].shape)
 				batch_X = np.concatenate((batch_X_real,batch_X_fake),axis=0)
 
 				batch_yd = np.concatenate((np.ones((config.batch_size)),np.zeros((config.batch_size))))
@@ -172,20 +165,28 @@ class dcgan(object):
 
 
 				#Print status and save images for each config.sample_freq iterations
-				if np.mod(counter,config.sample_freq) == 0:
+				if np.mod(counter,config.progress_freq) == 0:
 
-					dt = round(time.time()-t0,1)
-					ET = datetime.timedelta(seconds=round(time.time()-start_time,0))
+					print_training_progress(config,epoch,batch,batches,D_loss,G_loss,start_time,t0)
 					t0 = time.time()
-					print('Epoch: {}/{} | Batch: {}/{} | ET: {} | dt: {}s | D-loss: {:1.2e} | G-loss: {:1.2e}'.format(epoch+1,config.epochs,batch+1,batches,ET,dt,D_loss,G_loss))
 
 				counter += 1
 
-		print('\n' * 2)
-		print('='*65)
-		print('-'*23,'Training complete','-'*23)
-		print('='*65)
+		print_training_complete()
 
+	def save_model(self,config):
+
+		if not os.path.exists(config.out_dir):
+			os.makedirs(config.out_dir)
+
+		if not os.path.exists(config.save_dir):
+			os.makedirs(config.save_dir)
+
+		self.GAN.save(config.save_dir+'/{}_{}d_{}ep.h5'.format(config.dataset,config.z_dim,config.epochs))
+
+	def load_model(self,load_dir):
+
+		self.GAN = tf.keras.models.load_model(load_dir)
 
 
 

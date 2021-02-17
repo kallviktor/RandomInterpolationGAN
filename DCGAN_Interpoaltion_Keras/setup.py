@@ -1,6 +1,7 @@
 class model_config(object):
-	def __init__(self, dataset='mnist',loadmodel=False,,interpolation=False,epochs=100,batch_size=64,
-						z_dim=100,gf_dim=64,df_dim=64,gfc_dim=1024,dfc_dim=1024):
+	def __init__(self, dataset='mnist',loadmodel=False,interpolation=False,epochs=100,batch_size=64,
+						z_dim=100,gf_dim=64,df_dim=64,gfc_dim=1024,dfc_dim=1024,c_dim=1,learning_rate=0.0002,
+						beta_1 = 0.5,sample_freq=200):
 
 		"""
 			Args:
@@ -20,8 +21,8 @@ class model_config(object):
 		if dataset == 'mnist':
 
 			self.dataset = 		'mnist'
-			self.x_w = 			28
-			self.x_h = 			28
+			self.x_w = 			32		#upsampled from 28 in utils.py
+			self.x_h = 			32		#upsampled from 28 in utils.py
 			self.x_d = 			1
 
 		elif dataset == 'lines':
@@ -54,6 +55,10 @@ class model_config(object):
 
 		# general setup
 
+		self.learning_rate = learning_rate
+		self.beta_1 = beta_1
+		self.sample_freq = sample_freq
+		self.interpolation = interpolation
 		self.batch_size = 	batch_size
 		self.epochs = 		epochs
 		self.z_dim = 		z_dim

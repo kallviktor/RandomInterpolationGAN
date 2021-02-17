@@ -29,6 +29,13 @@ def print_training_progress(config,epoch,batch,batches,D_loss,G_loss,start_time,
 
 	dt = round(time.time()-t0,1)
 	ET = datetime.timedelta(seconds=round(time.time()-start_time,0))
+	
+
+	if epoch == 0 and batch+1 == config.progress_freq:
+		est_time = datetime.timedelta(seconds=round(dt*batches*config.epochs/config.progress_freq,0))
+		print('Estimated time to completion: {}'.format(est_time))
+		print('\n'*1)
+	
 	print('Epoch: {}/{} | Batch: {}/{} | ET: {} | dt: {}s | D-loss: {:1.2e} | G-loss: {:1.2e}'.format(epoch+1,config.epochs,batch+1,batches,ET,dt,D_loss,G_loss))
 
 def print_training_initialized():
@@ -43,15 +50,5 @@ def print_training_complete():
 	print('='*65)
 	print('-'*23,'Training complete','-'*23)
 	print('='*65)
-
-def save_model(model,config):
-
-	if not os.path.exists(config.out_dir):
-		os.makedirs(config.out_dir)
-
-	if not os.path.exists(config.save_dir):
-		os.makedirs(config.save_dir)
-
-	model.save(save_dir+'/{}_{}d_{}ep.h5'.format(config.dataset,config.z_dim,config.epochs))
 
 

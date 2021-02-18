@@ -1,9 +1,11 @@
 from keras.datasets import mnist
+from keras.models import load_model as load
 import math
 import numpy as np
 import time
 import datetime
 import os
+import glob
 
 def load_mnist():
 	(X_train, y_train), (X_test, y_test) = mnist.load_data()
@@ -50,5 +52,27 @@ def print_training_complete():
 	print('='*65)
 	print('-'*23,'Training complete','-'*23)
 	print('='*65)
+
+def save_model(config,model):
+
+	if not os.path.exists(config.out_dir):
+			os.makedirs(config.out_dir)
+
+	if not os.path.exists(config.save_dir):
+		os.makedirs(config.save_dir)
+
+	if not os.path.exists(config.models_dir):
+		os.makedirs(config.models_dir)
+
+	model.D.save(config.models_dir+'/D_{}_{}d_{}ep.h5'.format(config.dataset,config.z_dim,config.epochs))
+	model.G.save(config.models_dir+'/G_{}_{}d_{}ep.h5'.format(config.dataset,config.z_dim,config.epochs))
+	model.GAN.save(config.models_dir+'/GAN_{}_{}d_{}ep.h5'.format(config.dataset,config.z_dim,config.epochs))
+
+def load_model(config,model_type):
+
+	file_path = glob.glob(config.load_dir+'/{}*.h5'.format(model_type))
+	model = load(file_path[0])
+
+	return model
 
 

@@ -174,19 +174,6 @@ class dcgan(object):
 
 		print_training_complete()
 
-	def save_model(self,config):
-
-		if not os.path.exists(config.out_dir):
-			os.makedirs(config.out_dir)
-
-		if not os.path.exists(config.save_dir):
-			os.makedirs(config.save_dir)
-
-		self.GAN.save(config.save_dir+'/{}_{}d_{}ep.h5'.format(config.dataset,config.z_dim,config.epochs))
-
-	def load_model(self,load_dir):
-
-		self.GAN = tf.keras.models.load_model(load_dir)
 
 
 

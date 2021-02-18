@@ -76,4 +76,7 @@ class model_config(object):
 
 			self.loadmodel = False
 			self.save_dir = self.out_dir+'/'+time.strftime('%Y%m%d-%H%M')+'_'+self.dataset
+			self.models_dir = self.save_dir+'/models'
+			self.images_dir = self.save_dir+'/imgs'
+			self.interpolation_dir = self.save_dir+'/interpolation'
 		

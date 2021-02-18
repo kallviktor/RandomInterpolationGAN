@@ -6,6 +6,7 @@ import time
 import datetime
 import os
 import glob
+import matplotlib.pyplot as plt
 
 def load_mnist():
 	(X_train, y_train), (X_test, y_test) = mnist.load_data()
@@ -71,8 +72,33 @@ def save_model(config,model):
 def load_model(config,model_type):
 
 	file_path = glob.glob(config.load_dir+'/{}*.h5'.format(model_type))
-	model = load(file_path[0])
+	model = load(file_path[0], compile = True)
 
 	return model
+
+def save_gen_imgs(config,G,epoch,batch):
+
+	image_frame_dim = int(math.ceil(config.batch_size**.5))
+
+	#batch_z = np.random.normal(0,1,size=(config.batch_size,config.z_dim))
+	batch_z = np.random.normal(0,1,size=(1,config.z_dim))
+	prediction = G.predict(batch_z)
+	prediction = prediction.reshape((config.x_h, config.x_w))
+	prediction = prediction*127.5 + 127.5
+	plt.imshow(prediction,cmap='gray')
+
+	if not os.path.exists(config.out_dir):
+			os.makedirs(config.out_dir)
+
+	if not os.path.exists(config.save_dir):
+		os.makedirs(config.save_dir)
+
+	if not os.path.exists(config.images_dir):
+		os.makedirs(config.images_dir)
+
+	plt.savefig(config.images_dir+'/vis_{}ep_{}batch'.format(epoch+1,batch+1))
+
+
+
 
 

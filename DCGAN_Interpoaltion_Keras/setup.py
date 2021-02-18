@@ -4,7 +4,8 @@ import time
 class model_config(object):
 	def __init__(self, dataset='mnist',loadmodel=False,interpolation=False,epochs=100,batch_size=64,
 						z_dim=100,gf_dim=64,df_dim=64,gfc_dim=1024,dfc_dim=1024,c_dim=1,learning_rate=0.0002,
-						beta_1 = 0.5,progress_freq=200,out_dir='/out',load_dir='/nodir'):
+						beta_1 = 0.5,progress_freq=200,vis_freq=500,plottrain_freq=500,
+						out_dir='/out',load_dir='/nodir'):
 
 		"""
 			Args:
@@ -51,6 +52,8 @@ class model_config(object):
 		self.learning_rate = learning_rate
 		self.beta_1 = beta_1
 		self.progress_freq = progress_freq
+		self.vis_freq = vis_freq
+		self.plottrain_freq = plottrain_freq
 		self.interpolation = interpolation
 		self.batch_size = 	batch_size
 		self.epochs = 		epochs

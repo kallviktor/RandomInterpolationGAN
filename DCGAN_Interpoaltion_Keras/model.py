@@ -41,7 +41,7 @@ class dcgan(object):
 
 		self.GAN = Sequential()
 		self.GAN.add(self.G)
-		self.D.trainable = False
+		self.D.trainable = True
 		self.GAN.add(self.D)
 
 
@@ -58,7 +58,6 @@ class dcgan(object):
 		D.add(Conv2D(filters=config.df_dim*2,strides=2,padding='same',kernel_size=5,kernel_initializer=init))
 		D.add(BN(momentum=0.9,epsilon=1e-5))
 		D.add(LeakyReLU(alpha=0.2))
-
 		
 
 		D.add(Conv2D(filters=config.df_dim*4,strides=2,padding='same',kernel_size=5,kernel_initializer=init))
@@ -128,11 +127,12 @@ class dcgan(object):
 		G_optim = Adam(learning_rate=config.learning_rate, beta_1=config.beta_1)
 		loss_f = 'binary_crossentropy'
 
+
 		#Compile models
-		self.D.compile(loss=loss_f,optimizer=D_optim)
-		self.D.trainable = True
-		self.G.compile(loss=loss_f,optimizer=G_optim)
-		self.GAN.compile(loss=loss_f,optimizer=G_optim)
+		self.D.compile(loss=D_lossfunc,optimizer=D_optim)
+		self.D.trainable = False
+		self.G.compile(loss=G_lossfunc,optimizer=G_optim)
+		self.GAN.compile(loss=G_lossfunc,optimizer=G_optim)
 
 		batches = int(len(X_train)/config.batch_size)		#int always rounds down --> no problem with running out of data
 
@@ -152,24 +152,27 @@ class dcgan(object):
 				#batch_X = np.concatenate((batch_X_real,batch_X_fake),axis=0)
 
 				#batch_yd = np.concatenate((np.ones((config.batch_size)),np.zeros((config.batch_size))))
+
 				batch_yd_real = np.ones((int(config.batch_size/2)))
 				batch_yd_fake = np.zeros((int(config.batch_size/2)))
 				batch_yg = np.ones((config.batch_size))
 
 				#Update D network
-				self.D.trainable = True
+				#self.D.trainable = True
 				D_loss_real = self.D.train_on_batch(batch_X_real, batch_yd_real)
 				D_loss_fake = self.D.train_on_batch(batch_X_fake, batch_yd_fake)
 				D_loss = D_loss_real+D_loss_fake
 
 				#Update G network
 				batch_z = np.random.normal(0,1,size=(int(config.batch_size),config.z_dim))
-				self.D.trainable = False
+				#self.D.trainable = False
 				G_loss = self.GAN.train_on_batch(batch_z, batch_yg)
+
 
 				#Update G network again according to https://github.com/carpedm20/DCGAN-tensorflow.git
+				#batch_z = np.random.normal(0,1,size=(int(config.batch_size),config.z_dim))
 				G_loss = self.GAN.train_on_batch(batch_z, batch_yg)
-
+				#G_loss = 0
 
 				#Save losses to vectors in order to plot
 				if np.mod(counter,config.vis_freq) == 0:

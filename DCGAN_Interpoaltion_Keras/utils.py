@@ -1,5 +1,7 @@
+import keras.backend as K
 from keras.datasets import mnist
 from keras.models import load_model as load
+from keras.metrics import Mean
 import math
 import numpy as np
 import time
@@ -98,6 +100,20 @@ def save_gen_imgs(config,G,epoch,batch):
 
 	plt.savefig(config.images_dir+'/vis_{}ep_{}batch'.format(epoch+1,batch+1))
 
+def G_lossfunc(y_true,y_pred):
+	
+	loss = K.mean(-K.log(y_pred))
+
+	return loss
+
+def D_lossfunc(y_true,y_pred):
+	
+	y_pred_real = y_pred[0:int(len(y_true)/2)]
+	y_pred_fake = y_pred[int(len(y_true)/2):]
+
+	loss = K.mean(-K.log(y_pred_real)-K.log(1-y_pred_fake))
+
+	return loss
 
 
 

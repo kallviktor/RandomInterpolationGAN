@@ -129,6 +129,7 @@ class dcgan(object):
 
 
 		#Compile models
+		#self.D.compile(loss=D_lossfunc,optimizer=D_optim)
 		self.D.compile(loss=D_lossfunc,optimizer=D_optim)
 		self.D.trainable = False
 		self.G.compile(loss=G_lossfunc,optimizer=G_optim)
@@ -149,30 +150,23 @@ class dcgan(object):
 
 				batch_z = np.random.normal(0,1,size=(int(config.batch_size/2),config.z_dim))
 				batch_X_fake = self.G.predict(batch_z)
-				#batch_X = np.concatenate((batch_X_real,batch_X_fake),axis=0)
+				batch_X = np.concatenate((batch_X_real,batch_X_fake),axis=0)
 
-				#batch_yd = np.concatenate((np.ones((config.batch_size)),np.zeros((config.batch_size))))
-
-				batch_yd_real = np.ones((int(config.batch_size/2)))
-				batch_yd_fake = np.zeros((int(config.batch_size/2)))
+				batch_yd = np.concatenate((np.ones((int(config.batch_size/2))),np.zeros((int(config.batch_size/2)))))
 				batch_yg = np.ones((config.batch_size))
 
 				#Update D network
-				#self.D.trainable = True
-				D_loss_real = self.D.train_on_batch(batch_X_real, batch_yd_real)
-				D_loss_fake = self.D.train_on_batch(batch_X_fake, batch_yd_fake)
-				D_loss = D_loss_real+D_loss_fake
+				D_loss = self.D.train_on_batch(batch_X,batch_yd)
+
 
 				#Update G network
 				batch_z = np.random.normal(0,1,size=(int(config.batch_size),config.z_dim))
-				#self.D.trainable = False
 				G_loss = self.GAN.train_on_batch(batch_z, batch_yg)
-
 
 				#Update G network again according to https://github.com/carpedm20/DCGAN-tensorflow.git
-				#batch_z = np.random.normal(0,1,size=(int(config.batch_size),config.z_dim))
+				batch_z = np.random.normal(0,1,size=(int(config.batch_size),config.z_dim))
 				G_loss = self.GAN.train_on_batch(batch_z, batch_yg)
-				#G_loss = 0
+
 
 				#Save losses to vectors in order to plot
 				if np.mod(counter,config.vis_freq) == 0:

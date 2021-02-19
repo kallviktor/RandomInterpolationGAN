@@ -102,9 +102,8 @@ def save_gen_imgs(config,G,epoch,batch):
 
 def G_lossfunc(y_true,y_pred):
 	
-	loss = K.mean(-K.log(y_pred))
-
-	return loss
+	#return K.mean(K.log(1-y_pred))
+	return K.mean(-K.log(y_pred))
 
 def D_lossfunc(y_true,y_pred):
 	

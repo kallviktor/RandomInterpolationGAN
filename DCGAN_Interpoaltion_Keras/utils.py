@@ -100,6 +100,27 @@ def save_gen_imgs(config,G,epoch,batch):
 
 	plt.savefig(config.images_dir+'/vis_{}ep_{}batch'.format(epoch+1,batch+1))
 
+def plot_save_train_prog(config,D_loss_vec,G_loss_vec,batch_vec,epoch,batch):
+
+	if not os.path.exists(config.out_dir):
+			os.makedirs(config.out_dir)
+
+	if not os.path.exists(config.save_dir):
+		os.makedirs(config.save_dir)
+
+	if not os.path.exists(config.images_dir):
+		os.makedirs(config.images_dir)
+
+
+	plt.plot(batch_vec,D_loss_vec,label='D-loss')
+	plt.plot(batch_vec,G_loss_vec,label='G-loss')
+
+	plt.xlabel('Batch')
+	plt.ylabel('Loss')
+	plt.legend()
+	plt.savefig(config.images_dir+'/trainprog_{}ep_{}batch'.format(epoch+1,batch+1))
+	plt.close()
+	
 def G_lossfunc(y_true,y_pred):
 	
 	#return K.mean(K.log(1-y_pred))

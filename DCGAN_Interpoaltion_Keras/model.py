@@ -136,6 +136,14 @@ class dcgan(object):
 		self.GAN.compile(loss=G_lossfunc,optimizer=G_optim)
 
 		batches = int(len(X_train)/config.batch_size)		#int always rounds down --> no problem with running out of data
+		
+		D_loss_vec = []
+		G_loss_vec = []
+		batch_vec = []
+
+		D_loss_vec.append(0)
+		G_loss_vec.append(0)
+		batch_vec.append(0)
 
 		counter = 1
 
@@ -167,13 +175,16 @@ class dcgan(object):
 				batch_z = np.random.normal(0,1,size=(int(config.batch_size),config.z_dim))
 				G_loss = self.GAN.train_on_batch(batch_z, batch_yg)
 
-
 				#Save losses to vectors in order to plot
+				D_loss_vec.append(D_loss)
+				G_loss_vec.append(G_loss)
+				batch_vec.append(counter)
+
 				if np.mod(counter,config.vis_freq) == 0:
 					save_gen_imgs(config,self.G,epoch,batch)
 
 				if np.mod(counter,config.plottrain_freq) == 0:
-					pass
+					plot_save_train_prog(config,D_loss_vec,G_loss_vec,batch_vec,epoch,batch)
 
 				#Print status and save images for each config.sample_freq iterations
 				if np.mod(counter,config.progress_freq) == 0:

@@ -14,7 +14,9 @@ def load_mnist():
 	(X_train, y_train), (X_test, y_test) = mnist.load_data()
 
 	X_train = np.pad(X_train, ((0,0),(2,2),(2,2)), 'constant')
+	X_train = (X_train.astype(np.float32) - 127.5)/127.5
 	X_test = np.pad(X_test, ((0,0),(2,2),(2,2)), 'constant')
+	X_test = (X_test.astype(np.float32) - 127.5)/127.5
 
 	return (X_train, y_train), (X_test, y_test)
 
@@ -59,7 +61,7 @@ def print_training_complete():
 def save_model(config,model):
 
 	if not os.path.exists(config.out_dir):
-			os.makedirs(config.out_dir)
+		os.makedirs(config.out_dir)
 
 	if not os.path.exists(config.save_dir):
 		os.makedirs(config.save_dir)
@@ -70,6 +72,22 @@ def save_model(config,model):
 	model.D.save(config.models_dir+'/D_{}_{}d_{}ep.h5'.format(config.dataset,config.z_dim,config.epochs))
 	model.G.save(config.models_dir+'/G_{}_{}d_{}ep.h5'.format(config.dataset,config.z_dim,config.epochs))
 	model.GAN.save(config.models_dir+'/GAN_{}_{}d_{}ep.h5'.format(config.dataset,config.z_dim,config.epochs))
+
+def save_model_checkpoint(config,epoch,D,G,GAN):
+
+	if not os.path.exists(config.out_dir):
+		os.makedirs(config.out_dir)
+
+	if not os.path.exists(config.save_dir):
+		os.makedirs(config.save_dir)
+
+	if not os.path.exists(config.models_dir):
+		os.makedirs(config.models_dir)
+
+	D.save(config.models_dir+'/D_{}_{}d_{}ep.h5'.format(config.dataset,config.z_dim,epoc+1))
+	G.save(config.models_dir+'/G_{}_{}d_{}ep.h5'.format(config.dataset,config.z_dim,epoch+1))
+	GAN.save(config.models_dir+'/GAN_{}_{}d_{}ep.h5'.format(config.dataset,config.z_dim,epoch+1))
+
 
 def load_model(config,model_type):
 
@@ -87,6 +105,7 @@ def save_gen_imgs(config,G,epoch,batch):
 	prediction = G.predict(batch_z)
 	prediction = prediction.reshape((config.x_h, config.x_w))
 	prediction = prediction*127.5 + 127.5
+	plt.axis('off')
 	plt.imshow(prediction,cmap='gray')
 
 	if not os.path.exists(config.out_dir):
@@ -99,6 +118,43 @@ def save_gen_imgs(config,G,epoch,batch):
 		os.makedirs(config.images_dir)
 
 	plt.savefig(config.images_dir+'/vis_{}ep_{}batch'.format(epoch+1,batch+1))
+	plt.close()
+
+def save_gen_imgs_new(config,G,epoch,batch):
+
+	image_frame_dim = int(math.ceil(config.batch_size**.5))
+	#fig, axs = plt.subplots(image_frame_dim, image_frame_dim)
+	fig = plt.figure(figsize=(image_frame_dim,image_frame_dim)) # Notice the equal aspect ratio
+	axs = [fig.add_subplot(image_frame_dim,image_frame_dim,i+1) for i in range(image_frame_dim*image_frame_dim)]
+
+	#batch_z = np.random.normal(0,1,size=(config.batch_size,config.z_dim))
+	
+	counter = 0
+	#for i in range(image_frame_dim):
+	#	for j in range(image_frame_dim):
+	for ax in axs:
+			batch_z = np.random.normal(0,1,size=(1,config.z_dim))
+			prediction = G.predict(batch_z)
+			prediction = prediction.reshape((config.x_h, config.x_w))
+			prediction = prediction*127.5 + 127.5
+			ax.imshow(prediction,cmap='gray')
+			ax.axis('off')
+			ax.set_aspect('equal')
+			counter += 1
+
+	if not os.path.exists(config.out_dir):
+			os.makedirs(config.out_dir)
+
+	if not os.path.exists(config.save_dir):
+		os.makedirs(config.save_dir)
+
+	if not os.path.exists(config.images_dir):
+		os.makedirs(config.images_dir)
+
+	plt.subplots_adjust(wspace=0.015, hspace=0.015)
+	plt.savefig(config.images_dir+'/vis_{}ep_{}batch'.format(epoch+1,batch+1))
+	plt.close()
+	
 
 def plot_save_train_prog(config,D_loss_vec,G_loss_vec,batch_vec,epoch,batch):
 
@@ -120,7 +176,7 @@ def plot_save_train_prog(config,D_loss_vec,G_loss_vec,batch_vec,epoch,batch):
 	plt.legend()
 	plt.savefig(config.images_dir+'/trainprog_{}ep_{}batch'.format(epoch+1,batch+1))
 	plt.close()
-	
+
 def G_lossfunc(y_true,y_pred):
 	
 	#return K.mean(K.log(1-y_pred))

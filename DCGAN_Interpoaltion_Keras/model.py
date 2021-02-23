@@ -117,7 +117,6 @@ class dcgan(object):
 
 		if config.dataset == 'mnist':
 			(X_train, y_train), (X_test, y_test) = load_mnist()
-			X_train = (X_train.astype(np.float32) - 127.5)/127.5
 		elif config.dataset == 'lines':
 			(X_train, y_train), (X_test, y_test) = load_lines()
 		elif config.dataset == 'celebA':
@@ -129,8 +128,7 @@ class dcgan(object):
 
 
 		#Compile models
-		#self.D.compile(loss=D_lossfunc,optimizer=D_optim)
-		self.D.compile(loss=D_lossfunc,optimizer=D_optim)
+		self.D.compile(loss=loss_f,optimizer=D_optim)
 		self.D.trainable = False
 		self.G.compile(loss=G_lossfunc,optimizer=G_optim)
 		self.GAN.compile(loss=G_lossfunc,optimizer=G_optim)
@@ -166,7 +164,6 @@ class dcgan(object):
 				#Update D network
 				D_loss = self.D.train_on_batch(batch_X,batch_yd)
 
-
 				#Update G network
 				batch_z = np.random.normal(0,1,size=(int(config.batch_size),config.z_dim))
 				G_loss = self.GAN.train_on_batch(batch_z, batch_yg)
@@ -180,19 +177,22 @@ class dcgan(object):
 				G_loss_vec.append(G_loss)
 				batch_vec.append(counter)
 
-				if np.mod(counter,config.vis_freq) == 0:
-					save_gen_imgs(config,self.G,epoch,batch)
+				#save generated images
+				if np.mod(counter,config.vis_freq) == 0 or (epoch==0 and batch==0):
+					save_gen_imgs_new(config,self.G,epoch,batch)
 
+				#plot training progress
 				if np.mod(counter,config.plottrain_freq) == 0:
 					plot_save_train_prog(config,D_loss_vec,G_loss_vec,batch_vec,epoch,batch)
 
 				#Print status and save images for each config.sample_freq iterations
 				if np.mod(counter,config.progress_freq) == 0:
-
 					print_training_progress(config,epoch,batch,batches,D_loss,G_loss,start_time,t0)
 					t0 = time.time()
 
 				counter += 1
+			#save model after each epoch
+			save_model_checkpoint(config,epoch,self.D,self.G,self.GAN)
 
 		print_training_complete()
 

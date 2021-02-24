@@ -114,7 +114,11 @@ def save_model_checkpoint(config,epoch,batches,D,G,GAN):
 def load_model(config,model_type):
 
 	file_path = glob.glob(config.load_dir+'/{}*.h5'.format(model_type))
-	model = load(file_path[0], compile = True)
+
+	if model_type == 'D_':
+		model = load(file_path[0], compile = True, custom_objects={'goodfellow_loss_D': goodfellow_loss_D})
+	else:
+		model = load(file_path[0], compile = True, custom_objects={'goodfellow_loss_G': goodfellow_loss_G})
 
 	return model
 

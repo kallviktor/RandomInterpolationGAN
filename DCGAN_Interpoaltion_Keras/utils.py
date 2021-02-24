@@ -9,13 +9,14 @@ import datetime
 import os
 import glob
 import matplotlib.pyplot as plt
+from numpy.random import randint
 
 def load_mnist():
 	(X_train, y_train), (X_test, y_test) = mnist.load_data()
 
-	X_train = np.pad(X_train, ((0,0),(2,2),(2,2)), 'constant')
+	#X_train = np.pad(X_train, ((0,0),(2,2),(2,2)), 'constant')
 	X_train = (X_train.astype(np.float32) - 127.5)/127.5
-	X_test = np.pad(X_test, ((0,0),(2,2),(2,2)), 'constant')
+	#X_test = np.pad(X_test, ((0,0),(2,2),(2,2)), 'constant')
 	X_test = (X_test.astype(np.float32) - 127.5)/127.5
 
 	return (X_train, y_train), (X_test, y_test)
@@ -43,7 +44,7 @@ def print_training_progress(config,epoch,batch,batches,D_loss,G_loss,start_time,
 		print('Estimated time to completion: {}'.format(est_time))
 		print('\n'*1)
 	
-	print('Epoch: {}/{} | Batch: {}/{} | ET: {} | dt: {}s | D-loss: {:1.2e} | G-loss: {:1.2e}'.format(epoch+1,config.epochs,batch+1,batches,ET,dt,D_loss,G_loss))
+	print('Epoch: {}/{} | Batch: {}/{} | ET: {} | dt: {}s | D-loss: {:1.2e} | G-loss: {:1.2e}'.format(epoch+1,config.epochs,batch,batches,ET,dt,D_loss,G_loss))
 
 def print_training_initialized():
 	print('\n' * 1)
@@ -84,7 +85,7 @@ def save_model_checkpoint(config,epoch,D,G,GAN):
 	if not os.path.exists(config.models_dir):
 		os.makedirs(config.models_dir)
 
-	D.save(config.models_dir+'/D_{}_{}d_{}ep.h5'.format(config.dataset,config.z_dim,epoc+1))
+	D.save(config.models_dir+'/D_{}_{}d_{}ep.h5'.format(config.dataset,config.z_dim,epoch+1))
 	G.save(config.models_dir+'/G_{}_{}d_{}ep.h5'.format(config.dataset,config.z_dim,epoch+1))
 	GAN.save(config.models_dir+'/GAN_{}_{}d_{}ep.h5'.format(config.dataset,config.z_dim,epoch+1))
 
@@ -152,7 +153,7 @@ def save_gen_imgs_new(config,G,epoch,batch):
 		os.makedirs(config.images_dir)
 
 	plt.subplots_adjust(wspace=0.015, hspace=0.015)
-	plt.savefig(config.images_dir+'/vis_{}ep_{}batch'.format(epoch+1,batch+1))
+	plt.savefig(config.images_dir+'/vis_{}ep_{}batch'.format(epoch+1,batch))
 	plt.close()
 	
 
@@ -174,7 +175,7 @@ def plot_save_train_prog(config,D_loss_vec,G_loss_vec,batch_vec,epoch,batch):
 	plt.xlabel('Batch')
 	plt.ylabel('Loss')
 	plt.legend()
-	plt.savefig(config.images_dir+'/trainprog_{}ep_{}batch'.format(epoch+1,batch+1))
+	plt.savefig(config.images_dir+'/trainprog_{}ep_{}batch'.format(epoch+1,batch))
 	plt.close()
 
 def G_lossfunc(y_true,y_pred):
@@ -191,6 +192,13 @@ def D_lossfunc(y_true,y_pred):
 
 	return loss
 
+def wasserstein_loss(y_true, y_pred):
+	return K.mean(y_true * y_pred)
 
-
-
+def generate_real_samples(dataset, n_samples):
+	# choose random instances
+	ix = randint(0, dataset.shape[0], n_samples)
+	# select images
+	X = dataset[ix]
+	
+	return X

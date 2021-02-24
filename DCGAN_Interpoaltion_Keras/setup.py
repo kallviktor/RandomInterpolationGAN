@@ -4,7 +4,7 @@ import time
 class model_config(object):
 	def __init__(self, dataset='mnist',loadmodel=False,interpolation=False,epochs=100,batch_size=64,
 						z_dim=100,gf_dim=64,df_dim=64,gfc_dim=1024,dfc_dim=1024,c_dim=1,learning_rate=0.0002,
-						beta_1 = 0.5,progress_freq=200,vis_freq=500,plottrain_freq=500,
+						beta_1 = 0.5,clip=0.01,n_critic=5,progress_freq=200,vis_freq=500,plottrain_freq=500,
 						out_dir='/out',load_dir='/nodir'):
 
 		"""
@@ -25,8 +25,8 @@ class model_config(object):
 		if dataset == 'mnist':
 
 			self.dataset = 		'mnist'
-			self.x_w = 			32		#upsampled from 28 in utils.py
-			self.x_h = 			32		#upsampled from 28 in utils.py
+			self.x_w = 			28		#upsampled from 28 in utils.py
+			self.x_h = 			28		#upsampled from 28 in utils.py
 			self.x_d = 			1
 
 		elif dataset == 'lines':
@@ -51,6 +51,8 @@ class model_config(object):
 		# general setup
 		self.learning_rate = learning_rate
 		self.beta_1 = beta_1
+		self.clip = clip
+		self.n_critic = n_critic
 		self.progress_freq = progress_freq
 		self.vis_freq = vis_freq
 		self.plottrain_freq = plottrain_freq

@@ -10,7 +10,7 @@ config = model_config(dataset='mnist',loadmodel=False,interpolation=False,
 						epochs=10,batch_size=64,
 						z_dim=100,gf_dim=32,df_dim=32,c_dim=1,
 						progress_freq=100,vis_freq=100,plottrain_freq=100,
-						learning_rate=0.0002,
+						learning_rate= 0.00005,clip=0.01,n_critic=5,
 						load_dir='/Users/erikpiscator/Documents/RandomInterpolationGAN/DCGAN_Interpoaltion_Keras/out/20210219-2232_mnist/models')
 
 

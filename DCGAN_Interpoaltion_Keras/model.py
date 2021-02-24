@@ -1,10 +1,9 @@
 from keras.models import Sequential
-from keras.layers import Dense, Reshape, ReLU, LeakyReLU, BatchNormalization as BN#, tanh, sigmoid
+from keras.layers import Dense, Reshape, ReLU, LeakyReLU, BatchNormalization as BN, Dropout
 from keras.layers.core import Activation, Flatten
 from keras.layers.normalization import BatchNormalization
 from keras.layers.convolutional import UpSampling2D, Conv2D, MaxPooling2D, Conv2DTranspose
 from keras.optimizers import SGD, Adam, RMSprop
-from keras.datasets import mnist
 from keras.initializers import RandomNormal
 from keras.constraints import Constraint
 import keras.backend as K
@@ -37,159 +36,173 @@ class dcgan(object):
 		self.build_model(config)
 
 	def build_model(self,config):
-		"""
+	
 		self.D = self.discriminator(config)
 		self.G = self.generator(config)
+		self.D.trainable = False
 
 		self.GAN = Sequential()
 		self.GAN.add(self.G)
 		self.GAN.add(self.D)
-		"""
-		self.D = self.discriminator(config)
-		self.G = self.generator(config)
-		# make weights in the critic not trainable
-		for layer in self.D.layers:
-			if not isinstance(layer, BN):
-				layer.trainable = False
-		# connect them
-		self.GAN = Sequential()
-		# add generator
-		self.GAN.add(self.G)
-		# add the critic
-		self.GAN.add(self.D)
-		# compile model
-		opt = RMSprop(lr=0.00005)
-		self.GAN.compile(loss=wasserstein_loss, optimizer=opt)
+
+		loss, opt = get_loss_opt(config,'GAN')
 		
-
+		self.GAN.compile(loss=loss, optimizer=opt)
+		
+		#print('GAN:')
+		#self.GAN.summary()
 
 	def discriminator(self,config):
 
 		init = RandomNormal(stddev=0.02)
-		const = ClipConstraint(config.clip)
 		input_shape = (config.x_h,config.x_w,config.x_d)
-		"""
-		D = Sequential()
+		if config.dataset == 'mnist':
+			D = Sequential()
 
-		D.add(Conv2D(filters=config.df_dim,strides=2,padding='same',kernel_size=5,kernel_initializer=init,kernel_constraint=const,input_shape=input_shape))
-		D.add(LeakyReLU(alpha=0.2))
+			D.add(Conv2D(filters=config.df_dim,strides=2,padding='same',kernel_size=5,kernel_initializer=init,input_shape=input_shape))
+			D.add(LeakyReLU(alpha=0.2))
 
-		D.add(Conv2D(filters=config.df_dim*2,strides=2,padding='same',kernel_size=5,kernel_constraint=const,kernel_initializer=init))
-		D.add(BN(momentum=0.9,epsilon=1e-5))
-		D.add(LeakyReLU(alpha=0.2))
-		
+			D.add(Conv2D(filters=config.df_dim*2,strides=2,padding='same',kernel_size=5,kernel_initializer=init))
+			D.add(BN(momentum=0.9,epsilon=1e-5))
+			D.add(LeakyReLU(alpha=0.2))
+			
 
-		D.add(Conv2D(filters=config.df_dim*4,strides=2,padding='same',kernel_size=5,kernel_constraint=const,kernel_initializer=init))
-		D.add(BN(momentum=0.9,epsilon=1e-5))
-		D.add(LeakyReLU(alpha=0.2))
+			D.add(Conv2D(filters=config.df_dim*4,strides=2,padding='same',kernel_size=5,kernel_initializer=init))
+			D.add(BN(momentum=0.9,epsilon=1e-5))
+			D.add(LeakyReLU(alpha=0.2))
 
-		#if config.dataset not in ['mnist','lines']:
-		D.add(Conv2D(filters=config.df_dim*8,strides=2,padding='same',kernel_size=5,kernel_constraint=const,kernel_initializer=init))
-		D.add(BN(momentum=0.9,epsilon=1e-5))
-		D.add(LeakyReLU(alpha=0.2))
+			#if config.dataset not in ['mnist','lines']:
+			D.add(Conv2D(filters=config.df_dim*8,strides=2,padding='same',kernel_size=5,kernel_initializer=init))
+			D.add(BN(momentum=0.9,epsilon=1e-5))
+			D.add(LeakyReLU(alpha=0.2))
 
-		D.add(Flatten())
-		D.add(Dense(1))
-		#D.add(Activation('sigmoid'))
-		"""
-			# define model
-		model = Sequential()
-		# downsample to 14x14
-		model.add(Conv2D(64, (4,4), strides=(2,2), padding='same', kernel_initializer=init, kernel_constraint=const, input_shape=input_shape))
-		model.add(BN())
-		model.add(LeakyReLU(alpha=0.2))
-		# downsample to 7x7
-		model.add(Conv2D(64, (4,4), strides=(2,2), padding='same', kernel_initializer=init, kernel_constraint=const))
-		model.add(BN())
-		model.add(LeakyReLU(alpha=0.2))
-		# scoring, linear activation
-		model.add(Flatten())
-		model.add(Dense(1))
-		# compile model
-		opt = RMSprop(lr=0.00005)
-		model.compile(loss=wasserstein_loss, optimizer=opt)
+			D.add(Flatten())
+			D.add(Dense(1))
+			D.add(Activation('sigmoid'))
+			
+			loss, opt = get_loss_opt(config,'D')
+			D.compile(loss=loss, optimizer=opt)
+
+		elif config.dataset == 'lines':
+			D = Sequential()
+			depth = 32 
+			dropout=0.25 
+			input_shape = (config.x_h,config.x_w,config.x_d)
+
+			D.add(Conv2D(depth*1, 3, strides=2, input_shape=input_shape, padding='same', kernel_initializer='random_uniform'))
+			D.add(BatchNormalization(momentum=0.9))
+			D.add(LeakyReLU(alpha=0.2))
+			D.add(Dropout(dropout))
+			D.add(Conv2D(depth*2, 3, strides=2, padding='same',kernel_initializer='random_uniform'))
+			D.add(BatchNormalization(momentum=0.9))
+			D.add(LeakyReLU(alpha=0.2))
+			D.add(Dropout(dropout))
+			D.add(Conv2D(depth*4, 3, strides=2, padding='same',kernel_initializer='random_uniform'))
+			D.add(BatchNormalization(momentum=0.9))
+			D.add(LeakyReLU(alpha=0.2))
+			D.add(Dropout(dropout))
+			D.add(Conv2D(depth*8, 3, strides=2, padding='same',kernel_initializer='random_uniform'))
+			D.add(BatchNormalization(momentum=0.9))
+			D.add(LeakyReLU(alpha=0.2))
+			D.add(Dropout(dropout))
+
+			# Each MNIST input = 28 X 28 X 1, depth = 1
+			# Each Output = 14 X 14 X 1, depth = 64 
+			# Model has 4 convolutional layer, each with a dropout layer in between 
+
+			# Output 
+			D.add(Flatten())
+			D.add(Dense(1))
+			D.add(Activation('sigmoid'))
+
+			loss, opt = get_loss_opt(config,'D')
+			D.compile(loss=loss, optimizer=opt)
 
 		#print('D:')
 		#D.summary()
 
-		return model
+		return D
 
 	def generator(self,config):
 
 		init = RandomNormal(stddev=0.02)
-		"""
-		G = Sequential()
+		if config.dataset == 'mnist':
+			G = Sequential()
 
-		G.add(Dense(input_dim=config.z_dim,kernel_initializer=init,units=config.gf_dim*8*4*4))
-		G.add(Reshape((4,4,config.gf_dim*8)))
-		G.add(BN(momentum=0.9,epsilon=1e-5))
-		G.add(ReLU())
-
-		G.add(Conv2DTranspose(filters=config.gf_dim*4,strides=2,padding='same',kernel_size=5,kernel_initializer=init))
-		G.add(BN(momentum=0.9,epsilon=1e-5))
-		G.add(ReLU())
-
-		G.add(Conv2DTranspose(filters=config.gf_dim*2,strides=2,padding='same',kernel_size=5,kernel_initializer=init))
-		G.add(BN(momentum=0.9,epsilon=1e-5))
-		G.add(ReLU())
-
-		if config.dataset not in ['mnist','lines']:
-			#more layers could (and should) be added in order to get correct output size of G
-
-			G.add(Conv2DTranspose(filters=config.gf_dim,strides=2,padding='same',kernel_size=5,kernel_initializer=init))
+			G.add(Dense(input_dim=config.z_dim,kernel_initializer=init,units=config.gf_dim*8*4*4))
+			G.add(Reshape((4,4,config.gf_dim*8)))
 			G.add(BN(momentum=0.9,epsilon=1e-5))
 			G.add(ReLU())
 
-		G.add(Conv2DTranspose(filters=config.c_dim,strides=2,padding='same',kernel_size=5,kernel_initializer=init))
-		G.add(Activation('tanh'))
-		"""
+			G.add(Conv2DTranspose(filters=config.gf_dim*4,strides=2,padding='same',kernel_size=5,kernel_initializer=init))
+			G.add(BN(momentum=0.9,epsilon=1e-5))
+			G.add(ReLU())
+
+			G.add(Conv2DTranspose(filters=config.gf_dim*2,strides=2,padding='same',kernel_size=5,kernel_initializer=init))
+			G.add(BN(momentum=0.9,epsilon=1e-5))
+			G.add(ReLU())
+
+			if config.dataset not in ['mnist','lines']:
+				#more layers could (and should) be added in order to get correct output size of G
+
+				G.add(Conv2DTranspose(filters=config.gf_dim,strides=2,padding='same',kernel_size=5,kernel_initializer=init))
+				G.add(BN(momentum=0.9,epsilon=1e-5))
+				G.add(ReLU())
+
+			G.add(Conv2DTranspose(filters=config.c_dim,strides=2,padding='same',kernel_size=5,kernel_initializer=init))
+			G.add(Activation('tanh'))
+		
+		elif config.dataset == 'lines':
+
+			G = Sequential() 
+			dropout = 0.4 
+			depth = 128
+			dim = 8
+
+			# In: 100 
+			# Out: dim X dim X depth 
+
+			G.add(Dense(dim*dim*depth, input_dim=config.z_dim))
+			G.add(Activation('relu'))
+			G.add(Reshape((dim, dim, depth)))
+			G.add(UpSampling2D())
+			#generator.add(Dropout(dropout))
+
+			# In: dim X dim X depth
+			# Out: 2*dim X 2*dim X depth/2 
+
+			G.add(Conv2D(depth, 3, padding='same'))
+			G.add(BatchNormalization(momentum=0.9))
+			G.add(Activation('relu'))
+			G.add(UpSampling2D())
+			G.add(Conv2D(int(depth/2), 3, padding='same'))
+			G.add(BatchNormalization(momentum=0.9))
+			G.add(Activation('relu'))
+
+
+			# Out : 28 X 28 X 1 grayscale image [0.0, 1.0] per pix
+			G.add(Conv2D(1,3,padding='same'))
+			G.add(Activation('tanh'))
+
 		#print('G:')
 		#G.summary()
 
-		model = Sequential()
-		# foundation for 7x7 image
-		n_nodes = 128 * 7 * 7
-		model.add(Dense(n_nodes, kernel_initializer=init, input_dim=config.z_dim))
-		model.add(LeakyReLU(alpha=0.2))
-		model.add(Reshape((7, 7, 128)))
-		# upsample to 14x14
-		model.add(Conv2DTranspose(128, (4,4), strides=(2,2), padding='same', kernel_initializer=init))
-		model.add(BN())
-		model.add(LeakyReLU(alpha=0.2))
-		# upsample to 28x28
-		model.add(Conv2DTranspose(128, (4,4), strides=(2,2), padding='same', kernel_initializer=init))
-		model.add(BN())
-		model.add(LeakyReLU(alpha=0.2))
-		# output 28x28x1
-		model.add(Conv2D(1, (7,7), activation='tanh', padding='same', kernel_initializer=init))
-
-		return model
+		return G
 
 
 	def train(self,config):
 
+		print_training_setup(config)
+
 		if config.dataset == 'mnist':
-			(X_train, y_train), (X_test, y_test) = load_mnist()
-			X_train = expand_dims(X_train,axis=-1)
+			X_train = load_mnist()
+			batches = int(len(X_train)/config.batch_size)
 		elif config.dataset == 'lines':
-			(X_train, y_train), (X_test, y_test) = load_lines()
+			batches = config.lines_batches
 		elif config.dataset == 'celebA':
 			(X_train, y_train), (X_test, y_test) = load_celebA()
+			batches = int(len(X_train)/config.batch_size)
 
-		#D_optim = Adam(learning_rate=config.learning_rate, beta_1=config.beta_1)
-		D_optim = RMSprop(learning_rate=config.learning_rate)
-		#G_optim = Adam(learning_rate=config.learning_rate, beta_1=config.beta_1)
-		G_optim = RMSprop(learning_rate=config.learning_rate)
-		loss_f = 'binary_crossentropy'
-
-
-		#Compile models
-		self.D.compile(loss=wasserstein_loss,optimizer=D_optim)
-		self.D.trainable = False
-		self.G.compile(loss=G_lossfunc,optimizer=G_optim)
-		self.GAN.compile(loss=wasserstein_loss,optimizer=G_optim)
-
-		batches = int(len(X_train)/config.batch_size)		#int always rounds down --> no problem with running out of data
 		
 		D_loss_vec = []
 		G_loss_vec = []
@@ -199,55 +212,43 @@ class dcgan(object):
 		G_loss_vec.append(0)
 		batch_vec.append(0)
 
-		counter = 0
+		counter = 1
 
 		print_training_initialized()
 
 		start_time = time.time()
 		t0 = start_time
+
 		for epoch in range(config.epochs):
-			for batch in range(0,batches,config.n_critic):
+			for batch in range(batches):
 
-				#Update D network more times than G, according to Wasserstein
-				for i in range(config.n_critic):
+				#Update D network
+				if config.dataset == 'lines':
+					batch_X_real, batch_yd_real= generate_real_samples_lines(config)
+				elif config.dataset in ['mnist','celebA']:
+					batch_X_real, batch_yd_real = generate_real_samples(config,X_train,random=config.random_sample,batch=batch)
+				
+				batch_X_fake, batch_yd_fake = generate_fake_samples(config,self.G)
 
-					#batch_X_real = X_train[int((batch+i)*config.batch_size/2):int((batch+i+1)*config.batch_size/2)][np.newaxis].transpose(1,2,3,0)
-					#batch_X_real = generate_real_samples(X_train,int(config.batch_size/2))[np.newaxis].transpose(1,2,3,0)
-					batch_X_real = generate_real_samples(X_train,int(config.batch_size/2))
-					batch_z = np.random.normal(0,1,size=(int(config.batch_size/2),config.z_dim))
-					batch_X_fake = self.G.predict(batch_z)
-					#batch_X = np.concatenate((batch_X_real,batch_X_fake),axis=0)
-
-					#batch_yd = np.concatenate((np.ones((int(config.batch_size/2))),-np.ones((int(config.batch_size/2)))))
-					batch_yd_real = -np.ones((int(config.batch_size/2)))
-					batch_yd_fake = np.ones((int(config.batch_size/2)))
-
-					D_loss_real = self.D.train_on_batch(batch_X_real,batch_yd_real)
-					D_loss_fake = self.D.train_on_batch(batch_X_fake,batch_yd_fake)
-
-					D_loss = 0.5*(D_loss_real+D_loss_fake)
+				D_loss = train_D(config,self.D,batch_X_real,batch_yd_real,batch_X_fake,batch_yd_fake)
 
 				#Update G network
-				
-				batch_yg = -np.ones((config.batch_size))
-				batch_z = np.random.normal(0,1,size=(int(config.batch_size),config.z_dim))
-				G_loss = self.GAN.train_on_batch(batch_z, batch_yg)
+				batch_z, batch_yg = generate_latent_codes(config)
+				G_loss = train_G(config,self.GAN,batch_z,batch_yg)
 
-				#Update G network again according to https://github.com/carpedm20/DCGAN-tensorflow.git
-				#batch_z = np.random.normal(0,1,size=(int(config.batch_size),config.z_dim))
-				#G_loss = self.GAN.train_on_batch(batch_z, batch_yg)
+				batch_z, batch_yg = generate_latent_codes(config)
+				G_loss = train_G(config,self.GAN,batch_z,batch_yg)
 
 				#Save losses to vectors in order to plot
 				D_loss_vec.append(D_loss)
 				G_loss_vec.append(G_loss)
 				batch_vec.append(counter)
 
-				#save generated images
+				#Save generated images
 				if np.mod(counter,config.vis_freq) == 0 or (epoch==0 and batch==0):
-					#save_gen_imgs_new(config,self.G,epoch,batch)
-					save_gen_imgs_new(config,self.G,epoch,batch)
+					save_gen_imgs_batch(config,self.G,epoch,batch)
 
-				#plot training progress
+				#Plot training progress
 				if np.mod(counter,config.plottrain_freq) == 0 and counter != 0:
 					plot_save_train_prog(config,D_loss_vec,G_loss_vec,batch_vec,epoch,batch)
 
@@ -256,29 +257,9 @@ class dcgan(object):
 					print_training_progress(config,epoch,batch,batches,D_loss,G_loss,start_time,t0)
 					t0 = time.time()
 
-				counter += config.n_critic
+				counter += 1
+
 			#save model after each epoch
-			save_model_checkpoint(config,epoch,self.D,self.G,self.GAN)
+			save_model_checkpoint(config,epoch,batches,self.D,self.G,self.GAN)
 
 		print_training_complete()
-
-
-# clip model weights to a given hypercube
-class ClipConstraint(Constraint):
-	# set clip value when initialized
-	def __init__(self, clip_value):
-		self.clip_value = clip_value
- 
-	# clip model weights to hypercube
-	def __call__(self, weights):
-		return K.clip(weights, -self.clip_value, self.clip_value)
- 
-	# get the config
-	def get_config(self):
-		return {'clip_value': self.clip_value}
-
-
-
-
-
-

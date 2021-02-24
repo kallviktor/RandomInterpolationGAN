@@ -1,3 +1,7 @@
+from numpy import zeros, arange, tile, sum
+from numpy.random import randint, choice
+from collections import Counter
+
 def InterpolStochSMC(generator, discriminator, DoG, config):
     
     """
@@ -45,13 +49,13 @@ def InterpolStochSMC(generator, discriminator, DoG, config):
     # finish at zT. The j:th row is the j:th coordinate's (there are zDim coordinates) trajectory, and the k:th column
     # is the k:th position of (out of N positions) the particle path, data type numpy.array shape = (n_parts, zDim, N)
     
-    weights_all = np.zeros((n_parts, N-2))
-    S = np.arange(n_parts)
+    weights_all = zeros((n_parts, N-2))
+    S = arange(n_parts)
     
-    PartsPaths = np.zeros((1, zDim, N))
+    PartsPaths = zeros((1, zDim, N))
     PartsPaths[0,:,0] = z0.reshape(-1)
     PartsPaths[0,:,-1] = zT.reshape(-1)
-    PartsPaths = np.tile(PartsPaths, (n_parts, 1, 1))
+    PartsPaths = tile(PartsPaths, (n_parts, 1, 1))
     
     # Run program ========================================================================================================
     # dt is the time step used when sampling a Gaussian bridge, data type float64
@@ -62,8 +66,8 @@ def InterpolStochSMC(generator, discriminator, DoG, config):
     # weight to the particle with index i), data type numpy.array shape = (n_parts, )
     
     dt = T / N
-    S_re = np.random.randint(0, 1, n_parts)
-    weights = np.zeros(n_parts)
+    S_re = randint(0, 1, n_parts)
+    weights = zeros(n_parts)
     
     for step in range(N-2):
         
@@ -81,7 +85,7 @@ def InterpolStochSMC(generator, discriminator, DoG, config):
         
         Tcur = T - dt * step
         Ncur = N - step
-        parts = np.zeros((n_parts, zDim, Ncur))
+        parts = zeros((n_parts, zDim, Ncur))
         
         # surv_freq, short for 'survivor-frequency', is a dictionary constructed from S_re where each key is an index (survivor
         # of the resampling step) and the corresponding value is the frequency that index appeared in S_re, data type python
@@ -89,7 +93,7 @@ def InterpolStochSMC(generator, discriminator, DoG, config):
         # resampled is a list of 'survivor' indices, data type numpy.array shape = (_, )
         # freq is a list of frequencies for resampled, data type numpy.array shape = (_, )
         
-        surv_freq = collections.Counter(S_re)
+        surv_freq = Counter(S_re)
         resampled = list(surv_freq.keys())
         freq = list(surv_freq.values())
         
@@ -129,10 +133,10 @@ def InterpolStochSMC(generator, discriminator, DoG, config):
             weights[idx] = weight_func(z, DoG)
         
         # Normalize weights
-        weights = weights / np.sum(weights)
+        weights = weights / sum(weights)
         
         # Resampling
-        S_re = np.random.choice(S, n_parts, replace=True, p=weights)
+        S_re = choice(S, n_parts, replace=True, p=weights)
         parts[:,:,1:] = parts[S_re,:,1:]
         
         # Storing weights for each new position of every particle path

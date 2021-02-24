@@ -21,21 +21,6 @@ from utils import *
 class dcgan(object):
 
 	def __init__(self, config):
-		"""
-		Args:
-		batch_size: The size of batch. Should be specified before training.
-		y_dim: (optional) Dimension of dim for y. [None]
-		z_dim: (optional) Dimension of dim for Z. [100]
-		gf_dim: (optional) Dimension of G filters in first conv layer. [64]
-		df_dim: (optional) Dimension of D filters in first conv layer. [64]
-		gfc_dim: (optional) Dimension of G units for for fully connected layer. [1024]
-		dfc_dim: (optional) Dimension of D units for fully connected layer. [1024]
-		c_dim: (optional) Dimension of image color. For grayscale input, set to 1. [3]
-		"""
-
-		self.build_model(config)
-
-	def build_model(self,config):
 	
 		self.D = self.discriminator(config)
 		self.G = self.generator(config)
@@ -54,8 +39,9 @@ class dcgan(object):
 
 	def discriminator(self,config):
 
-		init = RandomNormal(stddev=0.02)
+		init = get_init(config)
 		input_shape = (config.x_h,config.x_w,config.x_d)
+
 		if config.dataset == 'mnist':
 			D = Sequential()
 
@@ -84,33 +70,30 @@ class dcgan(object):
 			D.compile(loss=loss, optimizer=opt)
 
 		elif config.dataset == 'lines':
-			D = Sequential()
-			depth = 32 
-			dropout=0.25 
+
+			D = Sequential() 
 			input_shape = (config.x_h,config.x_w,config.x_d)
 
-			D.add(Conv2D(depth*1, 3, strides=2, input_shape=input_shape, padding='same', kernel_initializer='random_uniform'))
+			D.add(Conv2D(filters=config.df_dim*1, kernel_size=3, strides=2, input_shape=input_shape, padding='same', kernel_initializer='random_uniform'))
 			D.add(BatchNormalization(momentum=0.9))
 			D.add(LeakyReLU(alpha=0.2))
-			D.add(Dropout(dropout))
-			D.add(Conv2D(depth*2, 3, strides=2, padding='same',kernel_initializer='random_uniform'))
-			D.add(BatchNormalization(momentum=0.9))
-			D.add(LeakyReLU(alpha=0.2))
-			D.add(Dropout(dropout))
-			D.add(Conv2D(depth*4, 3, strides=2, padding='same',kernel_initializer='random_uniform'))
-			D.add(BatchNormalization(momentum=0.9))
-			D.add(LeakyReLU(alpha=0.2))
-			D.add(Dropout(dropout))
-			D.add(Conv2D(depth*8, 3, strides=2, padding='same',kernel_initializer='random_uniform'))
-			D.add(BatchNormalization(momentum=0.9))
-			D.add(LeakyReLU(alpha=0.2))
-			D.add(Dropout(dropout))
+			D.add(Dropout(config.dropout))
 
-			# Each MNIST input = 28 X 28 X 1, depth = 1
-			# Each Output = 14 X 14 X 1, depth = 64 
-			# Model has 4 convolutional layer, each with a dropout layer in between 
+			D.add(Conv2D(filters=config.df_dim*2, kernel_size=3, strides=2, padding='same',kernel_initializer='random_uniform'))
+			D.add(BatchNormalization(momentum=0.9))
+			D.add(LeakyReLU(alpha=0.2))
+			D.add(Dropout(config.dropout))
 
-			# Output 
+			D.add(Conv2D(filters=config.df_dim*4, kernel_size=3, strides=2, padding='same',kernel_initializer='random_uniform'))
+			D.add(BatchNormalization(momentum=0.9))
+			D.add(LeakyReLU(alpha=0.2))
+			D.add(Dropout(config.dropout))
+
+			D.add(Conv2D(filters=config.df_dim*8, kernel_size=3, strides=2, padding='same',kernel_initializer='random_uniform'))
+			D.add(BatchNormalization(momentum=0.9))
+			D.add(LeakyReLU(alpha=0.2))
+			D.add(Dropout(config.dropout))
+
 			D.add(Flatten())
 			D.add(Dense(1))
 			D.add(Activation('sigmoid'))
@@ -155,33 +138,28 @@ class dcgan(object):
 		elif config.dataset == 'lines':
 
 			G = Sequential() 
-			dropout = 0.4 
 			depth = 128
 			dim = 8
 
-			# In: 100 
-			# Out: dim X dim X depth 
 
-			G.add(Dense(dim*dim*depth, input_dim=config.z_dim))
+			G.add(Dense(units=dim*dim*depth,input_dim=config.z_dim))
 			G.add(Activation('relu'))
 			G.add(Reshape((dim, dim, depth)))
 			G.add(UpSampling2D())
-			#generator.add(Dropout(dropout))
 
 			# In: dim X dim X depth
 			# Out: 2*dim X 2*dim X depth/2 
 
-			G.add(Conv2D(depth, 3, padding='same'))
+			G.add(Conv2D(filters=depth, kernel_size=3, padding='same'))
 			G.add(BatchNormalization(momentum=0.9))
 			G.add(Activation('relu'))
 			G.add(UpSampling2D())
-			G.add(Conv2D(int(depth/2), 3, padding='same'))
+
+			G.add(Conv2D(filters=int(depth/2), kernel_size=3, padding='same'))
 			G.add(BatchNormalization(momentum=0.9))
 			G.add(Activation('relu'))
 
-
-			# Out : 28 X 28 X 1 grayscale image [0.0, 1.0] per pix
-			G.add(Conv2D(1,3,padding='same'))
+			G.add(Conv2D(filters=1,kernel_size=3,padding='same'))
 			G.add(Activation('tanh'))
 
 		#print('G:')

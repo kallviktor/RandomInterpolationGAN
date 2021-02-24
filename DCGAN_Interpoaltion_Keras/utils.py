@@ -3,6 +3,7 @@ from keras.datasets import mnist
 from keras.models import load_model as load
 from keras.metrics import Mean
 from keras.optimizers import SGD, Adam, RMSprop
+from keras.initializers import RandomNormal
 import math
 import numpy as np
 import time
@@ -14,6 +15,11 @@ from numpy.random import randint
 from lines import *
 
 def load_mnist():
+	"""Loads the 'mnist' dataset. Scaling is applied to get data in range [-1,1].
+	   Adding chanel dimension with expand_dims.
+	   Upscaling images from 28x28 to 32x32 for easier transition between datasets.
+	   Most datasets has a reslotion that is a multiple of 2."""
+
 	(X_train, _), (_, _) = mnist.load_data()
 
 	X_train = np.pad(X_train, ((0,0),(2,2),(2,2)), 'constant')
@@ -24,6 +30,8 @@ def load_mnist():
 
 
 def load_lines(batch_size):
+	"""Loads a batch of the 'lines' dataset. The dataset is generated on the fly
+	   with the get_dataset from the lines.py file."""
 
 	dataset = get_dataset('lines32',dict(batch_size = batch_size))
 	X_train = next(iter(dataset.train))['x']
@@ -31,13 +39,18 @@ def load_lines(batch_size):
 	return X_train
 
 def load_celebA():
+	"""Loads the celebA dataset."""
 	pass
 
 
 def conv_out_size_same(size, stride):
-  return int(math.ceil(float(size) / float(stride)))
+	"""Function not in use atm."""
+	return int(math.ceil(float(size) / float(stride)))
 
 def print_training_setup(config):
+	"""Printing the setup of the program defined in the config object from the
+	   model_config class in setup.py."""
+
 	print('\n'*1)
 	print('-'*24,'Training setup','-'*25)
 	print('Dataset: {}'.format(config.dataset))
@@ -50,6 +63,7 @@ def print_training_setup(config):
 	print('-'*65)
 
 def print_training_progress(config,epoch,batch,batches,D_loss,G_loss,start_time,t0):
+	"""Printing the progress of the training."""
 
 	dt = round(time.time()-t0,1)
 	ET = datetime.timedelta(seconds=round(time.time()-start_time,0))
@@ -76,7 +90,7 @@ def print_training_complete():
 	print('='*65)
 
 def save_model(config,model):
-	"""not in use atm."""
+	"""Function not in use atm."""
 	if not os.path.exists(config.out_dir):
 		os.makedirs(config.out_dir)
 
@@ -91,6 +105,7 @@ def save_model(config,model):
 	model.GAN.save(config.models_dir+'/GAN_{}_{}d_{}ep.h5'.format(config.dataset,config.z_dim,config.epochs))
 
 def save_model_checkpoint(config,epoch,batches,D,G,GAN):
+	"""Saves models during and after training. Creates directories if non existing."""
 
 	checkpoint_dir = config.models_dir+'/models_{}ep'.format(epoch+1)
 
@@ -112,6 +127,7 @@ def save_model_checkpoint(config,epoch,batches,D,G,GAN):
 
 
 def load_model(config,model_type):
+	"""Loads models from config.load_dir."""
 
 	file_path = glob.glob(config.load_dir+'/{}*.h5'.format(model_type))
 
@@ -123,10 +139,9 @@ def load_model(config,model_type):
 	return model
 
 def save_gen_imgs(config,G,epoch,batch):
-
+	"""Plots and saves one generated image from G."""
 	image_frame_dim = int(math.ceil(config.batch_size**.5))
 
-	#batch_z = np.random.normal(0,1,size=(config.batch_size,config.z_dim))
 	batch_z = np.random.normal(0,1,size=(1,config.z_dim))
 	prediction = G.predict(batch_z)
 	prediction = prediction.reshape((config.x_h, config.x_w))
@@ -147,17 +162,14 @@ def save_gen_imgs(config,G,epoch,batch):
 	plt.close()
 
 def save_gen_imgs_batch(config,G,epoch,batch):
+	"""Plots and saves (batch_size x batch_size) generated images from G."""
 
 	image_frame_dim = int(math.ceil(config.batch_size**.5))
-	#fig, axs = plt.subplots(image_frame_dim, image_frame_dim)
 	fig = plt.figure(figsize=(image_frame_dim,image_frame_dim)) # Notice the equal aspect ratio
 	axs = [fig.add_subplot(image_frame_dim,image_frame_dim,i+1) for i in range(image_frame_dim*image_frame_dim)]
-
-	#batch_z = np.random.normal(0,1,size=(config.batch_size,config.z_dim))
 	
 	counter = 0
-	#for i in range(image_frame_dim):
-	#	for j in range(image_frame_dim):
+
 	for ax in axs:
 			batch_z = np.random.normal(0,1,size=(1,config.z_dim))
 			prediction = G.predict(batch_z)
@@ -183,7 +195,7 @@ def save_gen_imgs_batch(config,G,epoch,batch):
 	
 
 def plot_save_train_prog(config,D_loss_vec,G_loss_vec,batch_vec,epoch,batch):
-
+	"""Saves plots of the D and G loss aginst number of batches. Creates directories if non existing."""
 	if not os.path.exists(config.out_dir):
 			os.makedirs(config.out_dir)
 
@@ -204,25 +216,29 @@ def plot_save_train_prog(config,D_loss_vec,G_loss_vec,batch_vec,epoch,batch):
 	plt.close()
 
 def goodfellow_loss_G(y_true,y_pred):
-	
+	"""Slightly modified G-loss function from original GAN paper."""
+
 	#return K.mean(K.log(1-y_pred))
 	return K.mean(-K.log(y_pred))
 
 def goodfellow_loss_D(y_true,y_pred):
-	
+	"""D-loss function from original GAN paper."""
+
 	m = len(y_pred)
 
 	y_pred_real = y_pred[0:int(len(y_true)/2)]
 	y_pred_fake = y_pred[int(len(y_true)/2):]
 
-	loss = K.sum(-K.log(y_pred_real)-K.log(1-y_pred_fake)) / m
-	return loss
+	return K.sum(-K.log(y_pred_real)-K.log(1-y_pred_fake)) / m
 
 def wasserstein_loss(y_true, y_pred):
+	"""Lossfunction from WGAN"""
+
 	return K.mean(y_true * y_pred)
 
 def generate_real_samples(config,dataset,random=False,batch=None):
-	
+	"""Generates a batch from a given dataset, either ransom or deterministic."""
+
 	n_samples = int(config.batch_size/2)
 
 	if random:
@@ -236,6 +252,7 @@ def generate_real_samples(config,dataset,random=False,batch=None):
 	return X, y
 
 def generate_real_samples_lines(config):
+	"""Generates a batch from 'lines' dataset."""
 	
 	batch_size = int(config.batch_size/2)
 	X = load_lines(batch_size)
@@ -244,6 +261,7 @@ def generate_real_samples_lines(config):
 	return X, y
 
 def generate_fake_samples(config,G):
+	"""Generates a batch of fake samples from G."""
 
 	n_samples = int(config.batch_size/2)
 
@@ -254,6 +272,7 @@ def generate_fake_samples(config,G):
 	return X, y
 
 def generate_latent_codes(config):
+	"""Generates a batch of codes from latent space."""
 
 	y = np.zeros((config.batch_size))
 	z = np.random.normal(0,1,size=(int(config.batch_size),config.z_dim))
@@ -261,6 +280,8 @@ def generate_latent_codes(config):
 	return z, y
 
 def get_loss_opt(config,model):
+	"""Sets the loss function and optimizer according to the setup."""
+
 	if config.optimizer == 'Adam':
 		opt = Adam(learning_rate=config.learning_rate, beta_1=config.beta_1)
 	elif config.optimizer == 'RMSprop':
@@ -282,7 +303,17 @@ def get_loss_opt(config,model):
 
 	return loss, opt
 
+def get_init(config):
+	"""Sets the kernel initializer for the networks."""
+
+	if config.init == 'RandomNormal':
+		init = RandomNormal(stddev=config.init_stddev)
+
+	return init
+
 def train_D(config,D,X_real,y_real,X_fake,y_fake):
+	"""Training D with either a concatinated batch of real and fake samples
+	   or two separate batches."""
 
 	if config.concatenate:
 		X = np.concatenate((X_real,X_fake),axis=0)
@@ -298,7 +329,7 @@ def train_D(config,D,X_real,y_real,X_fake,y_fake):
 	return D_loss
 
 def train_G(config,GAN,z,y):
-
+	"""Training G."""
 	G_loss = GAN.train_on_batch(z,y)
 
 	return G_loss

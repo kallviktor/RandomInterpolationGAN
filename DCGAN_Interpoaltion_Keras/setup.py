@@ -2,24 +2,80 @@ import os
 import time
 
 class model_config(object):
-	def __init__(self, dataset='mnist',loadmodel=False,interpolation=False,epochs=100,batch_size=64,
-						z_dim=100,gf_dim=64,df_dim=64,gfc_dim=1024,dfc_dim=1024,c_dim=1,learning_rate=0.0002,
-						beta_1 = 0.5,clip=0.01,n_critic=5,progress_freq=200,vis_freq=500,plottrain_freq=500,
-						optimizer=None,loss_f=None,random_sample=False,concatenate = False,lines_batches=1000,
-						out_dir='/out',load_dir='/nodir'):
+	def __init__(self,
+				 dataset='mnist',
+				 loadmodel=False,
+				 interpolation=False,
+				 epochs=100,
+				 batch_size=64,
+				 lines_batches=1000,
+				 z_dim=100,
+				 gf_dim=64,
+				 df_dim=64,
+				 gfc_dim=1024,
+				 dfc_dim=1024,
+				 c_dim=1,
+				 optimizer=None,
+				 loss_f=None,
+				 learning_rate=0.0002,
+				 beta_1=0.5,
+				 init='RandomNormal',
+				 init_stddev=0.02,
+				 clip=0.01,
+				 n_critic=5,
+				 dropout=0.25,
+				 progress_freq=200,
+				 vis_freq=500,
+				 plottrain_freq=500,
+				 random_sample=False,
+				 concatenate=False,
+				 out_dir='/out',
+				 load_dir='/nodir'):
 
 		"""
 			Args:
-			sess: TensorFlow session
-			batch_size: The size of batch. Should be specified before training.
-			y_dim: (optional) Dimension of dim for y. [None]
-			z_dim: (optional) Dimension of dim for Z. [100]
-			gf_dim: (optional) Dimension of   [64]
-			df_dim: (optional) Dimension of D filters in first conv layer. [64]
-			gfc_dim: (optional) Dimension of G units for for fully connected layer. [1024]
-			dfc_dim: (optional) Dimension of D units for fully connected layer. [1024]
-			c_dim: (optional) Dimension of image color. For grayscale input, set to 1. [3]
-		"""
+				dataset:		[str]		Which dataset to use, ['mnist', 'lines', 'celebA'].
+				loadmodel:		[bool]		loadmodel=True --> load pre trained model.
+												loadmodel=False --> train a new model.
+				interpolation:	[bool]		interpolation=True --> run the interpolation code.
+												interpolation=False --> no interpolation.
+				epochs:			[int]		Number of times the model is trained on the whole dataset.
+				batch_size:		[int]		Number of datapoint in each batch of the training. Determines
+											number of batches in one epoch.
+				lines_batches:	[int]		Since the 'lines' dataset is generated on the fly, the notion of epoch
+											and number of batches in one epoch becomes nonsensical. Instead,
+											lines_batche sets the number of batches in one epoch.
+				z_dim:			[int]		Dimension of the latent space.
+				gf_dim:			[int]		
+				df_dim:			[int]		Dimension of the first convolutional layer in D.
+				gfc_dim:		[int]
+				dfc_dim:		[int]
+				c_dim:			[int]		Number of channels in the output image. Set 1 for grayscale, 3 for color.
+				optimizer:		[str]		Optimizer used in training, ['Adam', 'RMSprop'].
+				loss_f:			[str]		Loss function used in training, ['Goodfellow','Wasserstein','binary_crossentropy']
+												Goodfellow: From original GAN paper (slightly modified)
+												Wasserstein: From WGAN paper.
+				learning_rate:	[float]		Learning rate parameter in the optimizer used in training.
+				beta_1:			[float]		The exponential decay rate for the 1st moment estimates in the Adam optimizer.
+				init:			[str]		Initializer for the kernel in networks.
+				init_stddev:	[float]		Standard deviation for initializer. Used in RandomNormal initializer.
+				clip:			[float]		Clip rate used in WGAN.
+				n_critic:		[int]		Number of times the critic (D) is trained for each training of the generatior (G), WGAN.
+				dropout:		[float]		Parameter used in dropout layer.
+				progress_freq:	[int]		Frequency of console update of the training progress.
+				vis_freq:		[int]		Frequency that G generates images that are saved during training.
+				plottrain_freq:	[int]		Frequency that the D & G loss is plotted and saved during training.
+				random_sample:	[bool]		Determines whether samples in batches are drawn deterministically or stochastically.
+												random_sample=True --> stochastic.
+												random_sample=False --> deterministic.
+				concatenate:	[bool]		Determines whether D is trained once on a batch of both real and fake samples
+											or twice on two half-batches, one real and one fake.
+												concatenate=True --> one batch of both real and fake.
+												concatenate=False --> two half-batches.
+				out_dir:		[str]		The name of the folder in which images and models will end up during and after training.
+				load_dir:		[str]		Directory from which to load pre-trained models.
+
+			"""
 
 
 		# dataset specific setup
@@ -44,16 +100,14 @@ class model_config(object):
 			self.x_h = 			32
 			self.x_d = 			3
 
-
-
-		
-
-
 		# general setup
 		self.learning_rate = learning_rate
 		self.beta_1 = beta_1
+		self.init = init
+		self.init_stddev = init_stddev
 		self.clip = clip
 		self.n_critic = n_critic
+		self.dropout = dropout
 		self.optimizer = optimizer
 		self.loss_f = loss_f
 		self.lines_batches = lines_batches
@@ -71,8 +125,6 @@ class model_config(object):
 		self.gfc_dim = 		gfc_dim
 		self.dfc_dim = 		dfc_dim
 		self.c_dim = 		c_dim
-
-
 
 		# create/load model specific setup
 		self.curr_dir = os.getcwd()

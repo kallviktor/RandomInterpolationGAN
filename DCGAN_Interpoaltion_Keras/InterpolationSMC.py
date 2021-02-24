@@ -1,9 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[ ]:
-
-
 def InterpolStochSMC(generator, discriminator, DoG, config):
     
     """

@@ -127,14 +127,16 @@ def save_model_checkpoint(config,epoch,batches,D,G,GAN):
 
 
 def load_model(config,model_type):
-	"""Loads models from config.load_dir."""
+	"""Loads models from config.load_dir. Currently no loading trainable model.
+	   Set compile=True and give the correct loss function in custom_objects
+	   in order to continue training."""
 
 	file_path = glob.glob(config.load_dir+'/{}*.h5'.format(model_type))
 
 	if model_type == 'D_':
-		model = load(file_path[0], compile = True, custom_objects={'goodfellow_loss_D': goodfellow_loss_D})
+		model = load(file_path[0], compile = False)#, custom_objects={'goodfellow_loss_D': goodfellow_loss_D})
 	else:
-		model = load(file_path[0], compile = True, custom_objects={'goodfellow_loss_G': goodfellow_loss_G})
+		model = load(file_path[0], compile = False)#, custom_objects={'goodfellow_loss_G': goodfellow_loss_G})
 
 	return model
 

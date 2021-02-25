@@ -1,7 +1,7 @@
 from numpy import zeros, ones, arange, tile, sum
 from numpy.random import randint, choice
 from collections import Counter
-from interpolations import *
+from interpolations_help_fcns import *
 
 def InterpolStochSMC(generator, discriminator, DoG, config):
     

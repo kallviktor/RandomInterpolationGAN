@@ -1,4 +1,5 @@
 from numpy import exp, abs
+import numpy as np
 
 def ker(h, a=1, b=1):
     

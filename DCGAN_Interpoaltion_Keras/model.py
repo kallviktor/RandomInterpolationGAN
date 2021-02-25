@@ -15,7 +15,7 @@ import time
 import datetime
 import os
 
-from utils import *
+from model_help_fcns import *
 
 
 class dcgan(object):

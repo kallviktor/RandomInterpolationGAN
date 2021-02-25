@@ -2,9 +2,9 @@
 Change values in the model_config input in order to change setup."""
 
 import model
-#from interpolationSMC import InterpolStochSMC
+from interpolationSMC import InterpolStochSMC
 from setup import model_config
-from utils import save_model, load_model
+from model_help_fcns import save_model, load_model
 
 
 #create configuration object
@@ -14,7 +14,7 @@ config = model_config(dataset='mnist',
 					  epochs=2,
 					  batch_size=64,
 					  lines_batches=1000,
-					  z_dim=2,
+					  z_dim=100,
 					  z_start=0,
 					  z_end=1,
 					  int_time=1,
@@ -48,15 +48,14 @@ if config.loadmodel:
 	GAN = load_model(config,'GAN_')
 
 else:
+
 	dcgan = model.dcgan(config)
 	dcgan.train(config)
-
 
 if config.interpolation:
 
 	interpol = InterpolStochSMC(G,D,GAN,config)
 	print(interpol.shape)
-	#interpolations.interpolation_stochastic()
 
 
 

@@ -1,9 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[ ]:
-
-
 from numpy import exp, abs, linspace, zeros, array, ones, kron, where, eye
 from numpy.random import multivariate_normal
 
@@ -136,30 +130,3 @@ def explicit(l):
     max_idx = np.where(l == max_val)
 
     return max_idx, max_val
-
-
-# In[5]:
-
-
-from numpy import array, ones, linspace, tile
-
-T = 1
-N = 3
-
-t = array([linspace(0, T, N)])
-I = ones((N, N))
-tmat = t*I
-tmat = tmat.T
-
-
-# In[6]:
-
-
-print(tmat)
-
-
-# In[ ]:
-
-
-
-

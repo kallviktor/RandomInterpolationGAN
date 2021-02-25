@@ -3,7 +3,7 @@ Change values in the model_config input in order to change setup."""
 
 import model
 from interpolationSMC import InterpolStochSMC
-from interpolations_help_fcns import vis_interpolation
+from interpolations_help_fcns import vis_interpolation, heat_map
 from setup import model_config
 from model_help_fcns import *
 from model_help_fcns import save_model, load_model
@@ -33,7 +33,7 @@ config = model_config(dataset='mnist',
 					  z_dim=2,
 					  z_start=0,
 					  z_end=1,
-					  int_time=0.1,
+					  int_time=0.05,
 					  int_steps=15,
 					  nmrParts=100,
 					  gf_dim=8,
@@ -72,6 +72,7 @@ else:
 	dcgan.train(config)
 
 if config.interpolation:
+	heat_map(GAN, config)
 	path = InterpolStochSMC(G,D,GAN,config)
 	vis_interpolation(config,G,path)
 

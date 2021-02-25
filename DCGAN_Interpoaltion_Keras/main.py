@@ -17,7 +17,6 @@ import os
 #	2 = INFO and WARNING messages are not printed
 #	3 = INFO, WARNING, and ERROR messages are not printed
 
-# Hej
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 

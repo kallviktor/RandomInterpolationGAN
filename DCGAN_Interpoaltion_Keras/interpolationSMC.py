@@ -37,8 +37,16 @@ def InterpolStochSMC(generator, discriminator, DoG, config):
     print_interpolation_initialized()
 
     zDim = config.z_dim
-    z0 = ones((config.z_dim,1))*config.z_start
-    zT  = ones((config.z_dim,1))*config.z_end
+
+    z0 = array([[-0.8440624],[-0.8449985]])
+    zT = array([[2.60492801],[0.70836017]])
+
+    # z0 = get_valid_code(DoG, config)
+    # zT = get_valid_code(DoG, config)
+    # print('z0:   ', z0)
+    # print('zT:   ', zT)
+    # z0 = ones((config.z_dim,1))*config.z_start
+    # zT  = ones((config.z_dim,1))*config.z_end
     
     T = config.int_time
     N = config.int_steps

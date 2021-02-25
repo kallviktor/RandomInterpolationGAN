@@ -1,5 +1,5 @@
 from numpy import exp, abs, linspace, zeros, array, ones, kron, where, eye, tile
-from numpy.random import multivariate_normal
+from numpy.random import multivariate_normal, normal
 import os
 import time
 import glob
@@ -194,4 +194,18 @@ def print_interpolation_complete():
 
 def print_interpolation_progress(N,step):
     print('Step {}/{}'.format(step+1,N-2))
+
+def get_valid_code(DoG, config):
+
+    threshold = config.thresh
+    while True:
+
+        z   = normal(0, 1, size=(1,config.z_dim)) 
+        score = DoG.predict(z)
+
+        if score > threshold:
+            return z.T
+
+
+
 

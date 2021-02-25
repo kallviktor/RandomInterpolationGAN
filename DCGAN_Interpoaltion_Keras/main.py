@@ -18,7 +18,7 @@ import os
 #	3 = INFO, WARNING, and ERROR messages are not printed
 
 
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
 
 
 #create configuration object
@@ -34,6 +34,7 @@ config = model_config(dataset='mnist',
 					  int_time=0.1,
 					  int_steps=15,
 					  nmrParts=100,
+					  thresh=0.5,
 					  gf_dim=8,
 					  gfc_dim=128,
 					  dfc_dim=64,

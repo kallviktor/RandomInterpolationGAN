@@ -16,6 +16,7 @@ class model_config(object):
 				 int_time=1,
 				 int_steps=10,
 				 nmrParts=100,
+				 thresh=0.95,
 				 gf_dim=8,
 				 gfc_dim=128,
 				 dfc_dim=64,
@@ -135,6 +136,7 @@ class model_config(object):
 		self.int_time 		= int_time
 		self.int_steps 		= int_steps
 		self.nmrParts 		= nmrParts
+		self.thresh			= thresh
 		self.gf_dim 		= gf_dim
 		self.gfc_dim 		= gfc_dim
 		self.dfc_dim 		= dfc_dim

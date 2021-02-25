@@ -93,7 +93,7 @@ def BPvec(z0, zT, T, N, nParticles):
     cov = khat_cov(tmat, smat, T)
     block_cov = kron(eye(dim), cov)
 
-    # means is a collection of mean vectors (one mean vector / column for each coordinate process), data type numpy.array
+    # means is a collection of mean vectors (one mean vector / row for each coordinate process), data type numpy.array
     # shape = (zDim, N)
     # flat_means transforms means to a column vector (each column in means staked on each other), data type numpy.array
     # shape = (zDim * N, 1)
@@ -111,7 +111,7 @@ def BPvec(z0, zT, T, N, nParticles):
     
     return BatchGB
 
-def weight_func(z, DoG, config):
+def weight_func(z, DoG):
     
     """
     The weight function for the particle filter. This is the critic / discriminator network's guess at how realistic the
@@ -122,11 +122,12 @@ def weight_func(z, DoG, config):
 
     D_x = DoG.predict(z)[0,0]
 
-    weight = D_x/(1 - D_x)
-    return weight
+    weights = D_x / (1 - D_x)
+    
+    return weights
 
 def explicit(l):
     max_val = max(l)
-    max_idx = np.where(l == max_val)
+    max_idx = where(l == max_val)
 
     return max_idx, max_val

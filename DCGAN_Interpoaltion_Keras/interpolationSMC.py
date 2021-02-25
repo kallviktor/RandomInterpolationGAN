@@ -132,12 +132,7 @@ def InterpolStochSMC(generator, discriminator, DoG, config):
         # by the function weight_func (which in essence is the combined DoG network).
         
         z = parts[:,:,1]
-        weights = weight_func(z, DoG)
-        
-        # for idx in range(n_parts):
-        #     
-        #     z = parts[idx,:,1] 
-        #     weights[idx] = weight_func(z, DoG)
+        weights = weight_func(z, zDim, DoG)
         
         # Normalize weights
         weights = weights / sum(weights)

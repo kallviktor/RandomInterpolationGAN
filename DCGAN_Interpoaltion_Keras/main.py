@@ -18,7 +18,7 @@ import os
 #	3 = INFO, WARNING, and ERROR messages are not printed
 
 
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 
 #create configuration object
@@ -52,7 +52,7 @@ config = model_config(dataset='mnist',
 					  random_sample=False,
 					  concatenate=True,
 					  out_dir='/out',
-					  load_dir='/Users/erikpiscator/Documents/RandomInterpolationGAN/DCGAN_Interpoaltion_Keras/out/20210224-1456_lines/models/models_2ep')
+					  load_dir=r'C:\Users\kalle\Documents\RandomInterpolationGAN\DCGAN_Interpoaltion_Keras\out\20210224-1456_lines\models\models_2ep')
 
 
 if config.loadmodel:
@@ -70,7 +70,6 @@ else:
 	dcgan.train(config)
 
 if config.interpolation:
-
 	path = InterpolStochSMC(G,D,GAN,config)
 	vis_interpolation(config,G,path)
 

@@ -117,18 +117,18 @@ def BPvec(z0, zT, T, N, nParticles):
     
     return BatchGB
 
-def weight_func(z, DoG):
+def weight_func(z, z_dim, DoG):
     
     """
     The weight function for the particle filter. This is the critic / discriminator network's guess at how realistic the
     generated image (with code z) is.
     """
-    z_dim = len(z)
+
     z = z.reshape(-1,z_dim)
 
-    D_x = DoG.predict(z)[0,0]
+    Dz = DoG.predict(z).reshape(-1)
 
-    weights = D_x / (1 - D_x)
+    weights = Dz / (1 - Dz)
     
     return weights
 

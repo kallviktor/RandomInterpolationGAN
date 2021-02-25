@@ -1,6 +1,7 @@
-from numpy import zeros, arange, tile, sum
+from numpy import zeros, ones, arange, tile, sum
 from numpy.random import randint, choice
 from collections import Counter
+from interpolations import *
 
 def InterpolStochSMC(generator, discriminator, DoG, config):
     
@@ -34,11 +35,11 @@ def InterpolStochSMC(generator, discriminator, DoG, config):
     # n_parts is size of particle filter, i.e. number of particles, data type int64
     
     zDim = config.z_dim
-    z0 = config.z_start
-    zT   = confif.z_end
+    z0 = ones((config.z_dim))*config.z_start
+    zT   = ones((config.z_dim))*config.z_end
     
-    T = config.time
-    N = config.steps
+    T = config.int_time
+    N = config.int_steps
     n_parts = config.nmrParts
     
     # Assemble / allocate matrices ====================================================================================

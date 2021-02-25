@@ -10,10 +10,14 @@ class model_config(object):
 				 batch_size=64,
 				 lines_batches=1000,
 				 z_dim=100,
-				 gf_dim=64,
-				 df_dim=64,
-				 gfc_dim=1024,
-				 dfc_dim=1024,
+				 z_start=0,
+				 z_end=1,
+				 int_time=1,
+				 int_steps=10,
+				 nmrParts=100,
+				 gf_dim=8,
+				 gfc_dim=128,
+				 dfc_dim=64,
 				 c_dim=1,
 				 optimizer=None,
 				 loss_f=None,
@@ -46,10 +50,15 @@ class model_config(object):
 											and number of batches in one epoch becomes nonsensical. Instead,
 											lines_batche sets the number of batches in one epoch.
 				z_dim:			[int]		Dimension of the latent space.
-				gf_dim:			[int]		
+				z_start:		[int]		Start position of interpolation. Same dimension as z_dim.
+				z_end:			[int]		End position of interpolation. Same dimension as z_dim.
+				time:			[int]		Total elapsed time in interpolation, a tuning paramter essentially.
+				steps:			[int]		Number of steops in interpolation, including start and end point.
+				nmrParts:		[int]		Number of particles in the SMC step of interpolation.
+				gf_dim:			[int]		Dimension of the first convolutional layer in G.
 				df_dim:			[int]		Dimension of the first convolutional layer in D.
-				gfc_dim:		[int]
-				dfc_dim:		[int]
+				gfc_dim:		[int]		Chanels of the first convolutional layer in G.
+				dfc_dim:		[int]		Chanels of the first convolutional layer in D.
 				c_dim:			[int]		Number of channels in the output image. Set 1 for grayscale, 3 for color.
 				optimizer:		[str]		Optimizer used in training, ['Adam', 'RMSprop'].
 				loss_f:			[str]		Loss function used in training, ['Goodfellow','Wasserstein','binary_crossentropy']
@@ -81,65 +90,69 @@ class model_config(object):
 		# dataset specific setup
 		if dataset == 'mnist':
 
-			self.dataset = 		'mnist'
-			self.x_w = 			32		#upsampled from 28 in utils.py
-			self.x_h = 			32		#upsampled from 28 in utils.py
-			self.x_d = 			1
+			self.dataset 	= 'mnist'
+			self.x_w 		= 32		#upsampled from 28 in utils.py
+			self.x_h 		= 32		#upsampled from 28 in utils.py
+			self.x_d 		= 1
 
 		elif dataset == 'lines':
 
-			self.dataset = 		'lines'
-			self.x_w = 			32
-			self.x_h = 			32
-			self.x_d = 			1
+			self.dataset 	= 'lines'
+			self.x_w		= 32
+			self.x_h 		= 32
+			self.x_d 		= 1
 		
 		elif dataset == 'celebA':
 
-			self.dataset = 		'celebA'
-			self.x_w = 			32
-			self.x_h = 			32
-			self.x_d = 			3
+			self.dataset 	= 'celebA'
+			self.x_w 		= 32
+			self.x_h 		= 32
+			self.x_d 		= 3
 
 		# general setup
-		self.learning_rate = learning_rate
-		self.beta_1 = beta_1
-		self.init = init
-		self.init_stddev = init_stddev
-		self.clip = clip
-		self.n_critic = n_critic
-		self.dropout = dropout
-		self.optimizer = optimizer
-		self.loss_f = loss_f
-		self.lines_batches = lines_batches
-		self.random_sample = random_sample
-		self.concatenate = concatenate
-		self.progress_freq = progress_freq
-		self.vis_freq = vis_freq
+		self.learning_rate 	= learning_rate
+		self.beta_1 		= beta_1
+		self.init 			= init
+		self.init_stddev 	= init_stddev
+		self.clip 			= clip
+		self.n_critic 		= n_critic
+		self.dropout 		= dropout
+		self.optimizer 		= optimizer
+		self.loss_f 		= loss_f
+		self.lines_batches 	= lines_batches
+		self.random_sample 	= random_sample
+		self.concatenate 	= concatenate
+		self.progress_freq 	= progress_freq
+		self.vis_freq 		= vis_freq
 		self.plottrain_freq = plottrain_freq
-		self.interpolation = interpolation
-		self.batch_size = 	batch_size
-		self.epochs = 		epochs
-		self.z_dim = 		z_dim
-		self.gf_dim = 		gf_dim
-		self.df_dim = 		df_dim
-		self.gfc_dim = 		gfc_dim
-		self.dfc_dim = 		dfc_dim
-		self.c_dim = 		c_dim
+		self.interpolation 	= interpolation
+		self.batch_size 	= batch_size
+		self.epochs 		= epochs
+		self.z_dim 			= z_dim
+		self.z_start 		= z_start
+		self.z_end 			= z_end
+		self.int_time 		= int_time
+		self.int_steps 		= int_steps
+		self.nmrParts 		= nmrParts
+		self.gf_dim 		= gf_dim
+		self.gfc_dim 		= gfc_dim
+		self.dfc_dim 		= dfc_dim
+		self.c_dim 			= c_dim
 
 		# create/load model specific setup
-		self.curr_dir = os.getcwd()
-		self.out_dir = 	self.curr_dir+out_dir 
+		self.curr_dir 		= os.getcwd()
+		self.out_dir 		= 	self.curr_dir+out_dir 
 
 		if loadmodel:
 
-			self.loadmodel = True
-			self.load_dir = load_dir
+			self.loadmodel 	= True
+			self.load_dir 	= load_dir
 
 		else:
 
-			self.loadmodel = False
-			self.save_dir = self.out_dir+'/'+time.strftime('%Y%m%d-%H%M')+'_'+self.dataset
+			self.loadmodel 	= False
+			self.save_dir 	= self.out_dir+'/'+time.strftime('%Y%m%d-%H%M')+'_'+self.dataset
 			self.models_dir = self.save_dir+'/models'
 			self.images_dir = self.save_dir+'/imgs'
-			self.interpolation_dir = self.save_dir+'/interpolation'
+			self.inter_dir 	= self.save_dir+'/interpolation'
 		

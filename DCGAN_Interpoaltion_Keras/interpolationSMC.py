@@ -131,10 +131,13 @@ def InterpolStochSMC(generator, discriminator, DoG, config):
         # is of interest (since we evolve the particle filter stepwise). Each such proposed next-step is given a weight assigned
         # by the function weight_func (which in essence is the combined DoG network).
         
-        for idx in range(n_parts):
-            
-            z = parts[idx,:,1] 
-            weights[idx] = weight_func(z, DoG)
+        z = parts[:,:,1]
+        weights = weight_func(z, DoG)
+        
+        # for idx in range(n_parts):
+        #     
+        #     z = parts[idx,:,1] 
+        #     weights[idx] = weight_func(z, DoG)
         
         # Normalize weights
         weights = weights / sum(weights)

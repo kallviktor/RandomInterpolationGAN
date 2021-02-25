@@ -11,8 +11,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 import tensorflow as tf
-#tf.autograph.set_verbosity(3)
-tf.get_logger().setLevel('FATAL')
+
 
 #prevent INFO and WARNING messages from printing
 #	0 = all messages are logged (default behavior)
@@ -21,7 +20,7 @@ tf.get_logger().setLevel('FATAL')
 #	3 = INFO, WARNING, and ERROR messages are not printed
 
 
-#os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 
 #create configuration object
@@ -55,7 +54,7 @@ config = model_config(dataset='mnist',
 					  random_sample=False,
 					  concatenate=True,
 					  out_dir='/out',
-					  load_dir='/Users/erikpiscator/Documents/RandomInterpolationGAN/DCGAN_Interpoaltion_Keras/out/20210224-1456_lines/models/models_2ep')
+					  load_dir=r'C:\Users\kalle\Documents\RandomInterpolationGAN\DCGAN_Interpoaltion_Keras\out\20210224-1456_lines\models\models_2ep')
 
 
 if config.loadmodel:

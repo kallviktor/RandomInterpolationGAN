@@ -1,17 +1,39 @@
-from numpy import exp, abs
-import numpy as np
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[ ]:
+
+
+from numpy import exp, abs, linspace, zeros, array, ones, kron, where, eye
+from numpy.random import multivariate_normal
 
 def ker(h, a=1, b=1):
     
     """ 
     Eq. (9) in Hult et al.
-    This is the kernel
+    This is the kernel of the Gaussian process.
     """
     
     return exp(-b * abs(h) ** a)
 
 
-def muhat(t, z0, zT, T):
+def muhat_mean(t, z0, zT, T):
+    
+    """
+    Eq. (12) in Hult et al.
+    Mean function for Gaussian bridge with kernel function 'ker'.
+    """
+    
+    # Input arguments ================================================================================================
+    # t is a discretized, equidistant time interval, data type numpy.array shape = (1, _)
+    # z0 is the start position, data type numpy.array shape = (zDim, 1)
+    # zT is the end position, data type numpy.array shape = (zDim, 1)
+    # T is the total time, data type int64
+    
+    # Idea ===========================================================================================================
+    # This function outputs a matrix where the i:th column corresponds to the mean of the i:th coordinate's Gaussian 
+    # bridge.
+    
     
     num   = z0 * (ker(t) - ker(T-t) * ker(T)) + zT * (ker(T-t) - ker(t) * ker(T))
     denom = 1 - ker(T) ** 2
@@ -19,18 +41,23 @@ def muhat(t, z0, zT, T):
     return num / denom
 
 
-def khat(t, s, T):
+def khat_cov(tmat, smat, T):
     
-    T1    = ker(t-s)
+    """
+    Eq. (12) in Hult et al.
+    Covariance function for Gaussian bridge with kernel function 'ker'.
+    """
     
-    num   = ker(T) * (ker(T-s) * ker(t) + ker(s) * ker(T-t)) - ker(T-s) * ker(T-t) - ker(s) * ker(t)
-    denom = 1 - ker(T) ** 2
-    T2    = num / denom
+    # Input arguments ================================================================================================
+    # tmat is a matrix where the rows are constant and where each column represents equidistant time points, data type
+    # numpy.array shape = (_, _)
+    # smat is a matrix where the columns are constant and where each row represents equidistant time points. smat is the
+    # transpose of tmat, data type numpy.array shape = (_, _)
+    # T is the total time, data type int64
     
-    return T1 + T2
-
-
-def khatvec(tmat, smat, T):
+    # Idea ===========================================================================================================
+    # This function outputs a covariance matrix with kernel function given in eq. (12) in Hult et al. This covariance
+    # matrix is the same for all zDim coordinate processes.
     
     T1 = ker(tmat-smat)
     
@@ -42,54 +69,64 @@ def khatvec(tmat, smat, T):
 
 
 def BPvec(z0, zT, T, N, nParticles):
-    # Bridge process from z0 to zT in N steps (over time-dimension) and in time T
+    
+    """
+    This function generates several Gaussian bridge processes. 
+    """
+    
+    # Input arguments ================================================================================================
+    # z0 is the start position, data type numpy.array shape = (zDim, 1)
+    # zT is the end position, data type numpy.array shape = (zDim, 1)
+    # T is the total time, data type int64
+    # N is the number time steps, data type int 64
+    # nParticles is essentially the batch size, data type int 64
+    
+    # Assemble matrices of time differences ==========================================================================
+    # t is a uniform discretization of the time interval, data type numpy.array shape = (1, N)
+    # smat is a matrix where each column has constant entries, data type numpy.array shape = (N, N)
+    # tmat is the transpose of smat, data type numpy.array shape = (N, N)
 
-    t_grid = np.linspace(0, T, N)    # Uniform grid on t-axis
+    t = array([linspace(0, T, N)])
+    smat = tile(t, (3, 1))
+    tmat = smat.transpose(1,0)
 
-    dim = len(z0)
-    Z = np.zeros((dim,N))
+    # Generate multi-dimensional random walk / Gaussian bridge ========================================================
+    
+    # cov is a covariance matrix (identical for all coordinate processes), data type numpy.array shape = (N, N)
+    # block_cov is 100N-by-100N diagonal block matrix with cov as its diagonal entries, data type numpy.array
+    # shape = (100N, 100N)
+    
+    cov = khat_cov(tmat, smat, T)
+    block_cov = kron(eye(dim), cov)
 
-    # Generate covariance matrix (identical for all coordinate processes!)
-    # These steps here work in practice, but need furnishing. It is not obvious what happens here really!
-
-    t_grid = np.array([np.linspace(0, T, N)])
-    I = np.ones((N,N))
-    t = t_grid
-    tmat = t*I
-    tmat = tmat.T
-    s = t
-    smat = s*I
-
-    # Generate covariance matrix
-    cov = khatvec(tmat, smat, T)
-
-    means = np.zeros((dim,N))
-    means = muhat(t, z0, zT, T)   # Dimension dim-by-N
-
-    # Generate collection of mean vectors (for each coordinate process)
-    means = np.zeros((dim,N))
-    means = muhat(t, z0, zT, T)   # Dimension dim-by-N
-
-    # Generate multi-dimensional random walk (one RW for each coordinate according to its mean and the covariance matrix)
-    num_samples = nParticles
+    # means is a collection of mean vectors (one mean vector / column for each coordinate process), data type numpy.array
+    # shape = (zDim, N)
+    # flat_means transforms means to a column vector (each column in means staked on each other), data type numpy.array
+    # shape = (zDim * N, 1)
+    
+    means = muhat_mean(t, z0, zT, T)
     flat_means = means.ravel()
+    
+    # Sampling nParticles Gaussian bridges at once
+    
+    BatchGB = multivariate_normal(flat_means, cov=block_cov, size=nParticles)
+    BatchGB = out.reshape((-1, ) + means.shape)
+    
+    # Output BatchGB is a 3-D tensor where each sheet is a Gaussian bridge corresponding to a particle, data type numpy.array
+    # shape = (nParticles, zDim, N)
+    
+    return BatchGB
 
-    # Vectorized sampling from several multivariate normal distributions at once
-    # Build block covariance matrix
-    block_cov = np.kron(np.eye(dim), cov)
-    out = np.random.multivariate_normal(flat_means, cov=block_cov, size=num_samples)
-    out = out.reshape((-1,) + means.shape)
-    # Batch of random bridge walks (this is a collection of matrices where each matrix is a multidimensional random walk)
-    # The size of the batch is given by the input argument nParticles
-    batchRWs = out
-
-    return batchRWs
-
-def weight_func(z, dcgan, config):
-    # print('Shape z: ', z.shape)
+def weight_func(z, DoG, config):
+    
+    """
+    The weight function for the particle filter. This is the critic / discriminator network's guess at how realistic the
+    generated image (with code z) is.
+    """
+    
     z = z.reshape(-1,100)
 
-    D_x = dcgan.combined.predict(z)[0,0]
+    D_x = DoG.predict(z)[0,0]
 
     weight = D_x/(1 - D_x)
     return weight
@@ -97,6 +134,32 @@ def weight_func(z, dcgan, config):
 def explicit(l):
     max_val = max(l)
     max_idx = np.where(l == max_val)
-    # max_idx = l.index(max_val)
+
     return max_idx, max_val
+
+
+# In[5]:
+
+
+from numpy import array, ones, linspace, tile
+
+T = 1
+N = 3
+
+t = array([linspace(0, T, N)])
+I = ones((N, N))
+tmat = t*I
+tmat = tmat.T
+
+
+# In[6]:
+
+
+print(tmat)
+
+
+# In[ ]:
+
+
+
 

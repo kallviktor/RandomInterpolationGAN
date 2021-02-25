@@ -1,4 +1,4 @@
-from numpy import exp, abs, linspace, zeros, array, ones, kron, where, eye, tile
+from numpy import exp, abs, linspace, zeros, array, ones, kron, where, eye, tile, meshgrid, concatenate
 from numpy.random import multivariate_normal, normal
 import os
 import time
@@ -205,6 +205,25 @@ def get_valid_code(DoG, config):
 
         if score > threshold:
             return z.T
+
+def heat_map(DoG, config):
+    z1 = linspace(-1, 2, 30)
+    z2 = linspace(-1, 2, 30)
+
+    zx, zy = meshgrid(z1, z2)
+
+    zx = zx.reshape(1,-1)
+    zy = zy.reshape(1,-1)
+
+    zbatch = concatenate((zx, zy)).reshape(-1, 2)
+
+    scores = DoG.predict(zbatch).reshape(30,30)
+
+    plt.imshow(scores, cmap='hot')
+
+    plt.savefig(config.save_dir +'/heat_map')
+    plt.close()
+
 
 
 

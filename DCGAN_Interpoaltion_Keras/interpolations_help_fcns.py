@@ -1,5 +1,10 @@
-from numpy import exp, abs, linspace, zeros, array, ones, kron, where, eye
+from numpy import exp, abs, linspace, zeros, array, ones, kron, where, eye, tile
 from numpy.random import multivariate_normal
+import os
+import time
+import glob
+import matplotlib.pyplot as plt
+
 
 def ker(h, a=1, b=1):
     
@@ -80,8 +85,9 @@ def BPvec(z0, zT, T, N, nParticles):
     # smat is a matrix where each column has constant entries, data type numpy.array shape = (N, N)
     # tmat is the transpose of smat, data type numpy.array shape = (N, N)
 
+    z_dim = len(z0)
     t = array([linspace(0, T, N)])
-    smat = tile(t, (3, 1))
+    smat = tile(t, (N, 1))
     tmat = smat.transpose(1,0)
 
     # Generate multi-dimensional random walk / Gaussian bridge ========================================================
@@ -91,7 +97,7 @@ def BPvec(z0, zT, T, N, nParticles):
     # shape = (100N, 100N)
     
     cov = khat_cov(tmat, smat, T)
-    block_cov = kron(eye(dim), cov)
+    block_cov = kron(eye(z_dim), cov)
 
     # means is a collection of mean vectors (one mean vector / column for each coordinate process), data type numpy.array
     # shape = (zDim, N)
@@ -104,21 +110,21 @@ def BPvec(z0, zT, T, N, nParticles):
     # Sampling nParticles Gaussian bridges at once
     
     BatchGB = multivariate_normal(flat_means, cov=block_cov, size=nParticles)
-    BatchGB = out.reshape((-1, ) + means.shape)
+    BatchGB = BatchGB.reshape((-1, ) + means.shape)
     
     # Output BatchGB is a 3-D tensor where each sheet is a Gaussian bridge corresponding to a particle, data type numpy.array
     # shape = (nParticles, zDim, N)
     
     return BatchGB
 
-def weight_func(z, DoG, config):
+def weight_func(z, DoG):
     
     """
     The weight function for the particle filter. This is the critic / discriminator network's guess at how realistic the
     generated image (with code z) is.
     """
-    
-    z = z.reshape(-1,100)
+    z_dim = len(z)
+    z = z.reshape(-1,z_dim)
 
     D_x = DoG.predict(z)[0,0]
 
@@ -127,6 +133,64 @@ def weight_func(z, DoG, config):
 
 def explicit(l):
     max_val = max(l)
-    max_idx = np.where(l == max_val)
+    max_idx = where(l == max_val)
 
     return max_idx, max_val
+
+def vis_interpolation(config,G,path):
+    
+    if not os.path.exists(config.out_dir):
+            os.makedirs(config.out_dir)
+
+    if not os.path.exists(config.save_dir):
+        os.makedirs(config.save_dir)
+
+    if not os.path.exists(config.inter_dir):
+        os.makedirs(config.inter_dir)
+
+    path = path.reshape(-1,config.z_dim)
+    fake_imgs = G.predict(path)
+    #fake_imgs = 0.5 * fake_imgs + 0.5
+
+    fig,axs = plt.subplots(1,config.int_steps)
+    count = 0
+    for i in range(config.int_steps):
+
+        axs[i].imshow(fake_imgs[count,:,:,0], cmap='gray')
+        axs[i].axis('off')
+        count += 1
+
+    #Check if filename exists and if so, save with same but new ending.
+    filename = '/inter_{}steps_{}t'.format(config.int_steps,str(config.int_time).replace('.',''))
+    filepath = config.inter_dir+filename
+    existing_filepaths = glob.glob(filepath+'*')
+
+    if existing_filepaths:
+        #sort and find last file among existing files with same filename. [-5] due to .png ending.
+        existing_filepaths = sorted(existing_filepaths, key=lambda x: int(x.split('_')[-1].split('.')[0]))
+        last_filepath = existing_filepaths[-1]
+        #find ending of last file. [-5] due to .png ending.
+        last_ending = last_filepath.split('_')[-1].split('.')[0]
+        plt.savefig(filepath+'_{}'.format(int(last_ending)+1))
+    else:
+        plt.savefig(filepath+'_1')
+        
+    plt.close()
+
+def print_interpolation_initialized():
+    print('\n' * 1)
+    print('='*65)
+    print('-'*19,'Interpolation initialized','-'*19)
+    print('='*65)
+    print('\n' * 1)
+
+def print_interpolation_complete():
+    print('\n' * 1)
+    print('='*65)
+    print('-'*20,'Interpolation complete','-'*21)
+    print('='*65)
+    print('\n' * 1)
+
+def print_interpolation_progress(N,step):
+    print('Step {}/{}'.format(step+1,N-2))
+

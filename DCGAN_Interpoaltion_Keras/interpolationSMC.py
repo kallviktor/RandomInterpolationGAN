@@ -34,9 +34,11 @@ def InterpolStochSMC(generator, discriminator, DoG, config):
     # N is number of visited points of interpolation, including start and end point, data type int64
     # n_parts is size of particle filter, i.e. number of particles, data type int64
     
+    print_interpolation_initialized()
+
     zDim = config.z_dim
-    z0 = ones((config.z_dim))*config.z_start
-    zT   = ones((config.z_dim))*config.z_end
+    z0 = ones((config.z_dim,1))*config.z_start
+    zT  = ones((config.z_dim,1))*config.z_end
     
     T = config.int_time
     N = config.int_steps
@@ -72,7 +74,8 @@ def InterpolStochSMC(generator, discriminator, DoG, config):
     
     for step in range(N-2):
         
-        print('>' * 4 + 'Remaining steps: ', (N-2)-step, '<' * 4)
+        print_interpolation_progress(N,step)
+        #print('>' * 4 + 'Remaining steps: ', (N-2)-step, '<' * 4)
         
         # Outer for-loop ==================================================================================================
         # The idea is to generate n_parts Gaussian bridges between z0 and zT where z0 (the starting position) is updated
@@ -138,7 +141,7 @@ def InterpolStochSMC(generator, discriminator, DoG, config):
         
         # Resampling
         S_re = choice(S, n_parts, replace=True, p=weights)
-        parts[:,:,1:] = parts[S_re,:,1:]
+        parts[:,:,:] = parts[S_re,:,:]
         
         # Storing weights for each new position of every particle path
         weights_all[:,step] = weights[S_re]
@@ -146,7 +149,7 @@ def InterpolStochSMC(generator, discriminator, DoG, config):
         # Update particle paths
         PartsPaths[:,:,step+1] = parts[:,:,1]
     
-    print('>' * 4 + 'Finished' + '<' * 4)
+    print_interpolation_complete()
     
     # Return the interpolation ============================================================================================
     # The interpolation that will be returned is a sequence of the positions with highest weigthts for every step over all

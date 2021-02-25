@@ -104,8 +104,6 @@ class dcgan(object):
 
 	def train(self,config):
 
-		print_training_setup(config)
-
 		if config.dataset == 'mnist':
 			X_train = load_mnist()
 			batches = int(len(X_train)/config.batch_size)

@@ -1,5 +1,6 @@
 import os
 import time
+from pathlib import Path
 
 class model_config(object):
 	def __init__(self,
@@ -141,12 +142,14 @@ class model_config(object):
 
 		# create/load model specific setup
 		self.curr_dir 		= os.getcwd()
-		self.out_dir 		= 	self.curr_dir+out_dir 
+		self.out_dir 		= self.curr_dir+out_dir 
 
 		if loadmodel:
 
 			self.loadmodel 	= True
 			self.load_dir 	= load_dir
+			self.save_dir 	= str(Path(load_dir).parent.parent)
+			self.inter_dir 	= self.save_dir+'/interpolation'
 
 		else:
 

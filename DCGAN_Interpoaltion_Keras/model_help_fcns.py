@@ -89,6 +89,12 @@ def print_training_complete():
 	print('-'*23,'Training complete','-'*23)
 	print('='*65)
 
+def print_loading_initialized():
+    print('Loading models.')
+
+def print_loading_complete():
+    print('Loading complete.')
+
 def save_model(config,model):
 	"""Function not in use atm."""
 	if not os.path.exists(config.out_dir):

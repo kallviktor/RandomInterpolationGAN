@@ -1,9 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[ ]:
-
-
 from numpy import exp, abs,
 
 def ker(h, a=1, b=1):

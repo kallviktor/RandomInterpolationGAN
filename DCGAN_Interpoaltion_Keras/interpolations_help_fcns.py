@@ -1,5 +1,6 @@
-from numpy import exp, abs, linspace, zeros, array, ones, kron, where, eye, tile, meshgrid, concatenate
+from numpy import exp, abs, linspace, zeros, array, ones, kron, where, eye, tile, meshgrid, concatenate, arange, round, block
 from numpy.random import multivariate_normal, normal
+import numpy as np
 import os
 import time
 import glob
@@ -128,7 +129,7 @@ def weight_func(z, z_dim, DoG):
 
     Dz = DoG.predict(z).reshape(-1)
 
-    weights = Dz / (1 - Dz)
+    weights = (Dz / (1 - Dz))**1
     
     return weights
 
@@ -149,7 +150,8 @@ def vis_interpolation(config,G,path):
     if not os.path.exists(config.inter_dir):
         os.makedirs(config.inter_dir)
 
-    path = path.reshape(-1,config.z_dim)
+    #path = path.reshape(-1,config.z_dim)
+    path = path.T
     fake_imgs = G.predict(path)
     #fake_imgs = 0.5 * fake_imgs + 0.5
 
@@ -177,7 +179,8 @@ def vis_interpolation(config,G,path):
         plt.savefig(filepath+'_1')
         
     plt.close()
-
+def dynamic_filename(filename):
+    pass
 def print_interpolation_initialized():
     print('\n' * 1)
     print('='*65)
@@ -207,23 +210,125 @@ def get_valid_code(DoG, config):
             return z.T
 
 def heat_map(DoG, config):
-    z1 = linspace(-1, 2, 30)
-    z2 = linspace(-1, 2, 30)
+
+    if not os.path.exists(config.out_dir):
+            os.makedirs(config.out_dir)
+
+    if not os.path.exists(config.save_dir):
+        os.makedirs(config.save_dir)
+
+    if not os.path.exists(config.hm_dir):
+        os.makedirs(config.hm_dir)
+
+    xmin = config.hm_xmin
+    xmax = config.hm_xmax
+    ymin = config.hm_ymin
+    ymax = config.hm_ymax
+    steps = config.hm_steps
+
+    if steps % 2 == 0:
+        steps += 1
+
+    skip = int((steps-1)/10)
+
+
+    z1 = linspace(xmin, xmax, steps)
+    z2 = linspace(ymin, ymax, steps)
 
     zx, zy = meshgrid(z1, z2)
 
     zx = zx.reshape(1,-1)
     zy = zy.reshape(1,-1)
 
-    zbatch = concatenate((zx, zy)).reshape(-1, 2)
+    zbatch = concatenate((zx, zy)).T
 
-    scores = DoG.predict(zbatch).reshape(30,30)
+    scores = DoG.predict(zbatch).reshape(steps,steps)
+    im = plt.imshow(scores, cmap='hot')
 
-    plt.imshow(scores, cmap='hot')
+    plt.colorbar(im)
+    plt.xticks(arange(0, steps, skip),round(z1[0::skip],1),rotation='vertical')
+    plt.yticks(arange(0, steps, skip),round(z2[0::skip],1))
 
-    plt.savefig(config.save_dir +'/heat_map')
+    plt.savefig(config.hm_dir+'/heatmap_2')
     plt.close()
 
+def latent_visualization(config,G):
+
+    xmin = config.hm_xmin
+    xmax = config.hm_xmax
+    ymin = config.hm_ymin
+    ymax = config.hm_ymax
+    steps = config.hm_steps
+
+    if steps % 2 == 0:
+        steps += 1
+
+    skip = int((steps-1)/10)
+
+
+    z1 = linspace(xmin, xmax, steps)
+    z2 = linspace(ymin, ymax, steps)
+
+    zx, zy = meshgrid(z1, z2)
+
+    zx = zx.reshape(1,-1)
+    zy = zy.reshape(1,-1)
+
+    zbatch = concatenate((zx, zy)).T
+    #print(zbatch.shape)
+    #z_grid = np.dstack(np.meshgrid(z1, z2))
+
+    #x_pred_grid = vae.generate(z_grid.reshape(m*m, 2),False).numpy().reshape(m, m, 32, 32)
+
+    imgs = G.predict(zbatch).reshape(steps, steps, 32, 32)
+    #print(imgs.shape)
+    #print(block(list(map(list, imgs))).shape)
+    plt.figure(figsize=(10, 10))
+    plt.imshow(block(list(map(list, imgs))),origin='lover',cmap='gray',extent=[xmin,xmax,ymin,ymax])
+
+    plt.savefig(config.hm_dir+'/latent_vis_2')
+    plt.close()
+
+def latent_inter(config, path, G):
+
+    xmin = config.hm_xmin
+    xmax = config.hm_xmax
+    ymin = config.hm_ymin
+    ymax = config.hm_ymax
+    steps = config.hm_steps
+
+    if steps % 2 == 0:
+        steps += 1
+
+    skip = int((steps-1)/10)
+
+
+    z1 = linspace(xmin, xmax, steps)
+    z2 = linspace(ymin, ymax, steps)
+
+    zx, zy = meshgrid(z1, z2)
+
+    zx = zx.reshape(1,-1)
+    zy = zy.reshape(1,-1)
+
+    zbatch = concatenate((zx, zy)).T
+    #print(zbatch.shape)
+    #z_grid = np.dstack(np.meshgrid(z1, z2))
+
+    #x_pred_grid = vae.generate(z_grid.reshape(m*m, 2),False).numpy().reshape(m, m, 32, 32)
+
+    imgs = G.predict(zbatch).reshape(steps, steps, 32, 32)
+    #print(imgs.shape)
+    #print(block(list(map(list, imgs))).shape)
+    plt.figure(figsize=(10, 10))
+    plt.imshow(block(list(map(list, imgs))),origin='lover',cmap='gray',extent=[xmin,xmax,ymin,ymax])
+
+    
+    x = path[0,:]
+    y = path[1,:]
+    plt.plot(x, y, linestyle='--', marker='o', color='b')
+    plt.savefig(config.inter_dir+'/inter_latent_vis_2')
+    plt.close()
 
 
 

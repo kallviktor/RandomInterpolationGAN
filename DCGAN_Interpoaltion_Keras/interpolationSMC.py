@@ -38,8 +38,8 @@ def InterpolStochSMC(generator, discriminator, DoG, config):
 
     zDim = config.z_dim
 
-    z0 = array([[-0.8440624],[-0.8449985]])
-    zT = array([[2.60492801],[0.70836017]])
+    z0 = array([[0.5],[0.5]])
+    zT = array([[-0.5],[-1]])
 
     # z0 = get_valid_code(DoG, config)
     # zT = get_valid_code(DoG, config)
@@ -138,8 +138,9 @@ def InterpolStochSMC(generator, discriminator, DoG, config):
         # particle paths, however only the second position of each particle path, i.e. the second column of each sheet in parts,
         # is of interest (since we evolve the particle filter stepwise). Each such proposed next-step is given a weight assigned
         # by the function weight_func (which in essence is the combined DoG network).
-        
+
         z = parts[:,:,1]
+
         weights = weight_func(z, zDim, DoG)
         
         # Normalize weights

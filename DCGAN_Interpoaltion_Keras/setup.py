@@ -35,6 +35,11 @@ class model_config(object):
 				 plottrain_freq=500,
 				 random_sample=False,
 				 concatenate=False,
+				 hm_xmin=0,
+				 hm_xmax=2,
+				 hm_ymin=0,
+				 hm_ymax=2,
+				 hm_steps=51,
 				 out_dir='/out',
 				 load_dir='/nodir'):
 
@@ -83,6 +88,11 @@ class model_config(object):
 											or twice on two half-batches, one real and one fake.
 												concatenate=True --> one batch of both real and fake.
 												concatenate=False --> two half-batches.
+				hm_xmin:		[int]		Minimum x value in heatmap.
+				hm_xmax:		[int]		Maximum x value in heatmap.
+				hm_ymin:		[int]		Minimum y value in heatmap.
+				hm_ymax:		[int]		Maximum y value in heatmap.
+				hm_steps:		[int]		Resolution of heatmap. Heatmap will be of resolution hm_steps x hm_steps.
 				out_dir:		[str]		The name of the folder in which images and models will end up during and after training.
 				load_dir:		[str]		Directory from which to load pre-trained models.
 
@@ -142,6 +152,13 @@ class model_config(object):
 		self.dfc_dim 		= dfc_dim
 		self.c_dim 			= c_dim
 
+		#heatmap setup
+		self.hm_xmin 		= hm_xmin
+		self.hm_xmax		= hm_xmax
+		self.hm_ymin		= hm_ymin
+		self.hm_ymax		= hm_ymax
+		self.hm_steps		= hm_steps
+
 		# create/load model specific setup
 		self.curr_dir 		= os.getcwd()
 		self.out_dir 		= self.curr_dir+out_dir 
@@ -152,6 +169,7 @@ class model_config(object):
 			self.load_dir 	= load_dir
 			self.save_dir 	= str(Path(load_dir).parent.parent)
 			self.inter_dir 	= self.save_dir+'/interpolation'
+			self.hm_dir			= self.save_dir+'/heatmap'
 
 		else:
 
@@ -160,4 +178,5 @@ class model_config(object):
 			self.models_dir = self.save_dir+'/models'
 			self.images_dir = self.save_dir+'/imgs'
 			self.inter_dir 	= self.save_dir+'/interpolation'
+			self.hm_dir			= self.save_dir+'/heatmap'
 		

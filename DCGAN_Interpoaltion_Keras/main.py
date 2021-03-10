@@ -3,7 +3,7 @@ Change values in the model_config input in order to change setup."""
 
 import model
 from interpolationSMC import InterpolStochSMC
-from interpolations_help_fcns import vis_interpolation, heat_map
+from interpolations_help_fcns import vis_interpolation, heat_map, latent_visualization, latent_inter
 from setup import model_config
 from model_help_fcns import *
 from model_help_fcns import save_model, load_model
@@ -24,17 +24,17 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 
 #create configuration object
-config = model_config(dataset='mnist',
+config = model_config(dataset='lines',
 					  loadmodel=True,
 					  interpolation=True,
-					  epochs=2,
+					  epochs=5,
 					  batch_size=64,
-					  lines_batches=1000,
+					  lines_batches=200,
 					  z_dim=2,
 					  z_start=0,
 					  z_end=1,
-					  int_time=0.05,
-					  int_steps=15,
+					  int_time=0.03,
+					  int_steps=10,
 					  nmrParts=100,
 					  gf_dim=8,
 					  gfc_dim=128,
@@ -53,8 +53,13 @@ config = model_config(dataset='mnist',
 					  plottrain_freq=100,
 					  random_sample=False,
 					  concatenate=True,
+					  hm_xmin=-2,
+					  hm_xmax=2,
+					  hm_ymin=-2,
+					  hm_ymax=2,
+					  hm_steps=51,
 					  out_dir='/out',
-					  load_dir=r'C:\Users\kalle\Documents\RandomInterpolationGAN\DCGAN_Interpoaltion_Keras\out\20210224-1456_lines\models\models_2ep')
+					  load_dir=r'/Users/erikpiscator/Documents/RandomInterpolationGAN/DCGAN_Interpoaltion_Keras/out/20210310-1433_lines/models/models_2ep')
 
 
 if config.loadmodel:
@@ -72,12 +77,13 @@ else:
 	dcgan.train(config)
 
 if config.interpolation:
-	heat_map(GAN, config)
+
 	path = InterpolStochSMC(G,D,GAN,config)
 	vis_interpolation(config,G,path)
+	latent_inter(config, path, G)
 
-
-
+#heat_map(GAN, config)
+#latent_visualization(config,G)
 
 
 

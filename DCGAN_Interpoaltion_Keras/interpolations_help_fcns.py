@@ -129,7 +129,11 @@ def weight_func(z, z_dim, DoG):
 
     Dz = DoG.predict(z).reshape(-1)
 
+    #Dz[Dz<0.3]=0
+
     weights = (Dz / (1 - Dz))**1
+
+
     
     return weights
 
@@ -165,7 +169,16 @@ def vis_interpolation(config,G,path):
 
     #Check if filename exists and if so, save with same but new ending.
     filename = '/inter_{}steps_{}t'.format(config.int_steps,str(config.int_time).replace('.',''))
-    filepath = config.inter_dir+filename
+
+    filepath = dynamic_filepath(config.inter_dir,filename)
+
+    plt.savefig(filepath)  
+    plt.close()
+
+def dynamic_filepath(save_dir,filename):
+    #Check if filename exists and if so, save with same but new ending.
+    #filename = '/inter_{}steps_{}t'.format(config.int_steps,str(config.int_time).replace('.',''))
+    filepath = save_dir+filename
     existing_filepaths = glob.glob(filepath+'*')
 
     if existing_filepaths:
@@ -174,13 +187,12 @@ def vis_interpolation(config,G,path):
         last_filepath = existing_filepaths[-1]
         #find ending of last file. [-5] due to .png ending.
         last_ending = last_filepath.split('_')[-1].split('.')[0]
-        plt.savefig(filepath+'_{}'.format(int(last_ending)+1))
+        new_filepath = filepath+'_{}'.format(int(last_ending)+1)
     else:
-        plt.savefig(filepath+'_1')
-        
-    plt.close()
-def dynamic_filename(filename):
-    pass
+        new_filepath = filepath+'_1'
+
+    return new_filepath
+
 def print_interpolation_initialized():
     print('\n' * 1)
     print('='*65)
@@ -243,13 +255,16 @@ def heat_map(DoG, config):
     zbatch = concatenate((zx, zy)).T
 
     scores = DoG.predict(zbatch).reshape(steps,steps)
+    scores[scores<0.53]=0
     im = plt.imshow(scores, cmap='hot')
 
     plt.colorbar(im)
     plt.xticks(arange(0, steps, skip),round(z1[0::skip],1),rotation='vertical')
     plt.yticks(arange(0, steps, skip),round(z2[0::skip],1))
 
-    plt.savefig(config.hm_dir+'/heatmap_2')
+    filename = '/heatmap'
+    filepath = dynamic_filepath(config.hm_dir,filename)
+    plt.savefig(filepath)
     plt.close()
 
 def latent_visualization(config,G):
@@ -286,7 +301,9 @@ def latent_visualization(config,G):
     plt.figure(figsize=(10, 10))
     plt.imshow(block(list(map(list, imgs))),origin='lover',cmap='gray',extent=[xmin,xmax,ymin,ymax])
 
-    plt.savefig(config.hm_dir+'/latent_vis_2')
+    filename = '/latent_vis'
+    filepath = dynamic_filepath(config.hm_dir,filename)
+    plt.savefig(filepath)
     plt.close()
 
 def latent_inter(config, path, G):
@@ -327,7 +344,10 @@ def latent_inter(config, path, G):
     x = path[0,:]
     y = path[1,:]
     plt.plot(x, y, linestyle='--', marker='o', color='b')
-    plt.savefig(config.inter_dir+'/inter_latent_vis_2')
+
+    filename = '/inter_latent_vis'
+    filepath = dynamic_filepath(config.inter_dir,filename)
+    plt.savefig(filepath)
     plt.close()
 
 

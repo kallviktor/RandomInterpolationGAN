@@ -2,6 +2,7 @@ from numpy import zeros, ones, arange, tile, sum
 from numpy.random import randint, choice
 from collections import Counter
 from interpolations_help_fcns import *
+from math import dist
 
 def InterpolStochSMC(generator, discriminator, DoG, config):
     
@@ -38,13 +39,36 @@ def InterpolStochSMC(generator, discriminator, DoG, config):
 
     zDim = config.z_dim
 
-    z0 = array([[0.5],[0.5]])
-    zT = array([[-0.5],[-1]])
+    #z0 = array([[0.5],[0.22]])
+    #zT = array([[0.5],[0]])
+    """
+    z0=array([[-1.39692937],
+        [-0.25102801],
+        [0.90856929],
+        [0.59829457],
+        [0.76654908],
+        [-1.04248133],
+        [-0.30277766],
+        [0.90546642],
+        [0.51776581],
+        [-0.44183417]])
 
-    # z0 = get_valid_code(DoG, config)
-    # zT = get_valid_code(DoG, config)
-    # print('z0:   ', z0)
-    # print('zT:   ', zT)
+    zT=array([[-0.42141017],
+        [2.0301715 ],
+        [1.08471715],
+        [-1.57596246],
+        [-1.23363746],
+        [0.27332751],
+        [-0.54345123],
+        [0.71440436],
+        [1.02717621],
+        [-0.60785543]])
+    
+    """
+    z0 = get_valid_code(DoG, config)
+    zT = get_valid_code(DoG, config)
+    #print('z0:   ', z0)
+    #print('zT:   ', zT)
     # z0 = ones((config.z_dim,1))*config.z_start
     # zT  = ones((config.z_dim,1))*config.z_end
     
@@ -169,12 +193,82 @@ def InterpolStochSMC(generator, discriminator, DoG, config):
     # data type numpy.array shape = (zDim, N)
     interpol = PartsPaths[0,:,:]
     
+    """
     for step in range(N-2):
         
         idxs, _ = explicit(weights_all[:,step])
         idx = idxs[0][0]
         
         interpol[:,step+1] = PartsPaths[idx,:,step+1]
-        
+    """
+    #PartsPaths[0,:,:]
+
+
+    """
+    numParts = PartsPaths.shape[0]
+    numSteps = PartsPaths.shape[2] - 1
+
+    min_max_step = []
+    for i in range(numParts):
+        steps = []
+        for j in range(numSteps):
+            steplength = dist(PartsPaths[i,:,j],PartsPaths[i,:,j+1])
+            steps.append(steplength)
+        max_step = max(steps)
+        min_max_step.append(max_step)
+
+    #idxs, _ = explicit(min_max_step)
+    #idx = idxs[0][0]
+    idx = min_max_step.index(min(min_max_step))   
+    interpol = PartsPaths[idx,:,:]
+    
+    """
+
+    numParts = PartsPaths.shape[0]
+    numSteps = PartsPaths.shape[2] - 1
+
+    interpol = PartsPaths[0,:,:]
+    curpoint = interpol[:,-1]
+
+    for i in range(numSteps,0,-1):
+        props = []
+        for j in range(numParts):
+            stepsize = dist(curpoint,PartsPaths[j,:,i-1])
+            props.append(stepsize)
+
+        bestP = props.index(min(props))
+        interpol[:,numSteps-1] = PartsPaths[bestP,:,numSteps-1]
+        curpoint = interpol[:,numSteps-1]
+
     return interpol
 
+def linear_interpol(config):
+    # Linear interpolation
+    #start = array([[0.5],[0.5]])
+    #end = array([[-0.5],[-1]])
+    start=array([[-1.39692937],
+        [-0.25102801],
+        [0.90856929],
+        [0.59829457],
+        [0.76654908],
+        [-1.04248133],
+        [-0.30277766],
+        [0.90546642],
+        [0.51776581],
+        [-0.44183417]])
+
+    end=array([[-0.42141017],
+        [2.0301715 ],
+        [1.08471715],
+        [-1.57596246],
+        [-1.23363746],
+        [0.27332751],
+        [-0.54345123],
+        [0.71440436],
+        [1.02717621],
+        [-0.60785543]])
+    t     = array(linspace(0, 1, config.int_steps)).reshape(1,-1)
+    z_seq = end * t + (1 - t) * start
+    x = z_seq[0,:]
+    y = z_seq[1,:]
+    return z_seq

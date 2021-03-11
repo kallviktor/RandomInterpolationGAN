@@ -2,7 +2,7 @@
 Change values in the model_config input in order to change setup."""
 
 import model
-from interpolationSMC import InterpolStochSMC
+from interpolationSMC import InterpolStochSMC, linear_interpol
 from interpolations_help_fcns import vis_interpolation, heat_map, latent_visualization, latent_inter
 from setup import model_config
 from model_help_fcns import *
@@ -27,15 +27,16 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 config = model_config(dataset='lines',
 					  loadmodel=True,
 					  interpolation=True,
-					  epochs=5,
+					  thresh=0.1,
+					  epochs=30,
 					  batch_size=64,
 					  lines_batches=200,
-					  z_dim=2,
+					  z_dim=50,
 					  z_start=0,
 					  z_end=1,
-					  int_time=0.03,
+					  int_time=1,
 					  int_steps=10,
-					  nmrParts=100,
+					  nmrParts=500,
 					  gf_dim=8,
 					  gfc_dim=128,
 					  dfc_dim=64,
@@ -59,7 +60,7 @@ config = model_config(dataset='lines',
 					  hm_ymax=2,
 					  hm_steps=51,
 					  out_dir='/out',
-					  load_dir=r'/Users/erikpiscator/Documents/RandomInterpolationGAN/DCGAN_Interpoaltion_Keras/out/20210310-1433_lines/models/models_2ep')
+					  load_dir=r'/Users/erikpiscator/Documents/RandomInterpolationGAN/DCGAN_Interpoaltion_Keras/out/20210311-1553_lines/models/models_6ep')
 
 
 if config.loadmodel:
@@ -78,9 +79,14 @@ else:
 
 if config.interpolation:
 
-	path = InterpolStochSMC(G,D,GAN,config)
-	vis_interpolation(config,G,path)
-	latent_inter(config, path, G)
+	stoch_path = InterpolStochSMC(G,D,GAN,config)
+	#lin_path = linear_interpol(config)
+
+	vis_interpolation(config,G,stoch_path)
+	#vis_interpolation(config,G,lin_path)
+
+	#latent_inter(config, stoch_path, G)
+	#latent_inter(config, lin_path, G)
 
 #heat_map(GAN, config)
 #latent_visualization(config,G)

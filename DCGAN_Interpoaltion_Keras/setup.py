@@ -16,7 +16,7 @@ class model_config(object):
 				 int_time=1,
 				 int_steps=10,
 				 nmrParts=100,
-				 thresh=0.95,
+				 thresh=0.8,
 				 gf_dim=8,
 				 gfc_dim=128,
 				 dfc_dim=64,

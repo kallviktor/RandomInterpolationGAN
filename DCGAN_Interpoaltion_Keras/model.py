@@ -77,8 +77,6 @@ class dcgan(object):
 	def generator(self,config):
 
 		init = get_init(config)
-		#depth = 128
-		#dim = 8	
 
 		G = Sequential() 
 

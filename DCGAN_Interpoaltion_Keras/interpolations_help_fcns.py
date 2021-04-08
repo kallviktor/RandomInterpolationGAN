@@ -118,6 +118,19 @@ def BPvec(z0, zT, T, N, nParticles):
     
     return BatchGB
 
+def track(zvec):
+
+    weights = zeros(zvec.shape[0])
+    i = 0
+    for z in zvec:
+        if (z[0] > 0.45 and z[0] < 0.55 and z[1] > -1.05 and z[1] < 0.55) or (z[0] > -0.55 and z[0] < 0.45 and z[1] < -0.95 and z[1] > -1.05):
+            weights[i] = 0.95
+        else:
+            weights[i] = 0
+        i += 1
+    #print(weights)
+    return weights
+
 def weight_func(z, z_dim, DoG):
     
     """
@@ -127,8 +140,8 @@ def weight_func(z, z_dim, DoG):
 
     z = z.reshape(-1,z_dim)
 
-    Dz = DoG.predict(z).reshape(-1)
-
+    #Dz = DoG.predict(z).reshape(-1)
+    Dz = track(z)
     #Dz[Dz<0.3]=0
 
     weights = (Dz / (1 - Dz))**1
@@ -255,7 +268,7 @@ def heat_map(DoG, config):
     zbatch = concatenate((zx, zy)).T
 
     scores = DoG.predict(zbatch).reshape(steps,steps)
-    scores[scores<0.53]=0
+    #scores[scores<0.53]=0
     im = plt.imshow(scores, cmap='hot')
 
     plt.colorbar(im)
@@ -349,6 +362,9 @@ def latent_inter(config, path, G):
     filepath = dynamic_filepath(config.inter_dir,filename)
     plt.savefig(filepath)
     plt.close()
+
+
+
 
 
 

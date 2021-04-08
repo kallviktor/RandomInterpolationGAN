@@ -1,3 +1,4 @@
+import numpy as np
 from numpy import zeros, ones, arange, tile, sum
 from numpy.random import randint, choice
 from collections import Counter
@@ -39,8 +40,8 @@ def InterpolStochSMC(generator, discriminator, DoG, config):
 
     zDim = config.z_dim
 
-    #z0 = array([[0.5],[0.22]])
-    #zT = array([[0.5],[0]])
+    z0 = array([[0.5],[0.5]])
+    zT = array([[-0.5],[-1]])
     """
     z0=array([[-1.39692937],
         [-0.25102801],
@@ -65,8 +66,8 @@ def InterpolStochSMC(generator, discriminator, DoG, config):
         [-0.60785543]])
     
     """
-    z0 = get_valid_code(DoG, config)
-    zT = get_valid_code(DoG, config)
+    #z0 = get_valid_code(DoG, config)
+    #zT = get_valid_code(DoG, config)
     #print('z0:   ', z0)
     #print('zT:   ', zT)
     # z0 = ones((config.z_dim,1))*config.z_start
@@ -107,7 +108,6 @@ def InterpolStochSMC(generator, discriminator, DoG, config):
     for step in range(N-2):
         
         print_interpolation_progress(N,step)
-        #print('>' * 4 + 'Remaining steps: ', (N-2)-step, '<' * 4)
         
         # Outer for-loop ==================================================================================================
         # The idea is to generate n_parts Gaussian bridges between z0 and zT where z0 (the starting position) is updated
@@ -172,13 +172,12 @@ def InterpolStochSMC(generator, discriminator, DoG, config):
         
         # Resampling
         S_re = choice(S, n_parts, replace=True, p=weights)
-        parts[:,:,:] = parts[S_re,:,:]
         
         # Storing weights for each new position of every particle path
         weights_all[:,step] = weights[S_re]
 
         # Update particle paths
-        PartsPaths[:,:,step+1] = parts[:,:,1]
+        PartsPaths = np.concatenate([PartsPaths[S_re,:,0:step+1],parts[S_re,:,1:]],2)
     
     print_interpolation_complete()
     
@@ -191,7 +190,8 @@ def InterpolStochSMC(generator, discriminator, DoG, config):
     
     # interpol is initialized as 0:th sheet of PartsPaths (this way the interpolation contains the correct start and end points),
     # data type numpy.array shape = (zDim, N)
-    interpol = PartsPaths[0,:,:]
+    rand_path = randint(n_parts)
+    interpol = PartsPaths[rand_path,:,:]
     
     """
     for step in range(N-2):
@@ -203,8 +203,8 @@ def InterpolStochSMC(generator, discriminator, DoG, config):
     """
     #PartsPaths[0,:,:]
 
-
     """
+    
     numParts = PartsPaths.shape[0]
     numSteps = PartsPaths.shape[2] - 1
 
@@ -221,7 +221,7 @@ def InterpolStochSMC(generator, discriminator, DoG, config):
     #idx = idxs[0][0]
     idx = min_max_step.index(min(min_max_step))   
     interpol = PartsPaths[idx,:,:]
-    
+    """
     """
 
     numParts = PartsPaths.shape[0]
@@ -230,22 +230,24 @@ def InterpolStochSMC(generator, discriminator, DoG, config):
     interpol = PartsPaths[0,:,:]
     curpoint = interpol[:,-1]
 
-    for i in range(numSteps,0,-1):
+    for i in range(numSteps,1,-1):
         props = []
         for j in range(numParts):
             stepsize = dist(curpoint,PartsPaths[j,:,i-1])
             props.append(stepsize)
 
         bestP = props.index(min(props))
-        interpol[:,numSteps-1] = PartsPaths[bestP,:,numSteps-1]
+        interpol[:,numSteps-1] = PartsPaths[bestP,:,i-1]
         curpoint = interpol[:,numSteps-1]
-
+    """
     return interpol
 
 def linear_interpol(config):
     # Linear interpolation
-    #start = array([[0.5],[0.5]])
-    #end = array([[-0.5],[-1]])
+    start = array([[0.5],[0.5]])
+    end = array([[-0.5],[-1]])
+
+    """
     start=array([[-1.39692937],
         [-0.25102801],
         [0.90856929],
@@ -267,6 +269,7 @@ def linear_interpol(config):
         [0.71440436],
         [1.02717621],
         [-0.60785543]])
+    """
     t     = array(linspace(0, 1, config.int_steps)).reshape(1,-1)
     z_seq = end * t + (1 - t) * start
     x = z_seq[0,:]

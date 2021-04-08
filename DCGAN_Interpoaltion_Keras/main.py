@@ -6,6 +6,7 @@ from interpolationSMC import InterpolStochSMC, linear_interpol
 from interpolations_help_fcns import vis_interpolation, heat_map, latent_visualization, latent_inter
 from setup import model_config
 from model_help_fcns import *
+from google_help_fcns import *
 from model_help_fcns import save_model, load_model
 import numpy as np
 import matplotlib.pyplot as plt
@@ -31,12 +32,12 @@ config = model_config(dataset='lines',
 					  epochs=30,
 					  batch_size=64,
 					  lines_batches=200,
-					  z_dim=50,
+					  z_dim=2,
 					  z_start=0,
 					  z_end=1,
-					  int_time=1,
-					  int_steps=10,
-					  nmrParts=500,
+					  int_time=0.03,
+					  int_steps=20,
+					  nmrParts=5000,
 					  gf_dim=8,
 					  gfc_dim=128,
 					  dfc_dim=64,
@@ -60,7 +61,7 @@ config = model_config(dataset='lines',
 					  hm_ymax=2,
 					  hm_steps=51,
 					  out_dir='/out',
-					  load_dir=r'/Users/erikpiscator/Documents/RandomInterpolationGAN/DCGAN_Interpoaltion_Keras/out/20210311-1553_lines/models/models_6ep')
+					  load_dir=r'/Users/erikpiscator/Repositories/RandomInterpolationGAN/DCGAN_Interpoaltion_Keras/out/20210224-1456_lines/models/models_2ep')
 
 
 if config.loadmodel:
@@ -84,8 +85,18 @@ if config.interpolation:
 
 	vis_interpolation(config,G,stoch_path)
 	#vis_interpolation(config,G,lin_path)
+	#print(G.predict(stoch_path.T).shape)
+	A = G.predict(stoch_path.T)
+	A = A[np.newaxis,:]
 
-	#latent_inter(config, stoch_path, G)
+	print(line_eval(A))
+
+	#A = G.predict(lin_path.T)
+	#A = A[np.newaxis,:]
+
+	#print(line_eval(A))
+
+	latent_inter(config, stoch_path, G)
 	#latent_inter(config, lin_path, G)
 
 #heat_map(GAN, config)

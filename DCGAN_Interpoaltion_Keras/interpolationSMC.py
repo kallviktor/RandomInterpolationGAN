@@ -40,8 +40,8 @@ def InterpolStochSMC(generator, discriminator, DoG, config):
 
     zDim = config.z_dim
 
-    z0 = array([[0.5],[-1.5]])
-    zT = array([[-1.5],[1]])
+    #z0 = array([[0.5],[-1.5]])
+    #zT = array([[-1.5],[1]])
     """
     z0=array([[-1.39692937],
         [-0.25102801],
@@ -66,8 +66,8 @@ def InterpolStochSMC(generator, discriminator, DoG, config):
         [-0.60785543]])
     
     """
-    #z0 = get_valid_code(DoG, config)
-    #zT = get_valid_code(DoG, config)
+    z0 = get_valid_code(DoG, config)
+    zT = get_valid_code(DoG, config)
     #print('z0:   ', z0)
     #print('zT:   ', zT)
     # z0 = ones((config.z_dim,1))*config.z_start
@@ -244,8 +244,9 @@ def InterpolStochSMC(generator, discriminator, DoG, config):
 
 def linear_interpol(config):
     # Linear interpolation
-    start = array([[-1.5],[1]])
-    end = array([[0.85],[1.2]])
+
+    start = normal(0, 1, size=(1,config.z_dim)).T
+    end = normal(0, 1, size=(1,config.z_dim)).T
 
     """
     start=array([[-1.39692937],
@@ -275,3 +276,18 @@ def linear_interpol(config):
     x = z_seq[0,:]
     y = z_seq[1,:]
     return z_seq
+
+def stochastic_interpol(generator, discriminator, DoG, config):
+
+    z0 = get_valid_code(DoG, config)
+    zT = get_valid_code(DoG, config)
+
+    T = config.int_time
+    N = config.int_steps
+    n_parts = 1
+
+    interpol = BPvec(z0, zT, T, N, n_parts)
+
+    return interpol[0,:,:]
+
+

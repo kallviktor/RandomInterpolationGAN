@@ -2,7 +2,7 @@
 Change values in the model_config input in order to change setup."""
 
 import model
-from interpolationSMC import InterpolStochSMC, linear_interpol
+from interpolationSMC import InterpolStochSMC, linear_interpol, stochastic_interpol
 from interpolations_help_fcns import vis_interpolation, heat_map, latent_visualization, latent_inter
 from setup import model_config
 from model_help_fcns import *
@@ -89,11 +89,13 @@ mean_smoothness_vec = np.zeros((k,1))
 
 if config.interpolation:
 	for i in range(k):
-		stoch_path = InterpolStochSMC(G,D,GAN,config)
+		#stochSMC_path = InterpolStochSMC(G,D,GAN,config)
+		stoch_path = stochastic_interpol(G,D,GAN,config)
+		#lin_path = linear_interpol(config)
 		path_vis = G.predict(stoch_path.T)
 		#paths_vis[i,:,:,:,:] = path_vis
 
-		#lin_path = linear_interpol(config)
+		
 		mean_dist,mean_smoothness = line_eval(path_vis[np.newaxis,:])
 
 		mean_dist_vec[i] = mean_dist
@@ -111,9 +113,13 @@ if config.interpolation:
 
 
 
-#stoch_path = InterpolStochSMC(G,D,GAN,config)
+#stochSMC_path = InterpolStochSMC(G,D,GAN,config)
+
+#stoch_path = stochastic_interpol(G,D,GAN,config)
+#print(stoch_path.shape)
 #lin_path = linear_interpol(config)
 
+#vis_interpolation(config,G,stochSMC_path)
 #vis_interpolation(config,G,stoch_path)
 #vis_interpolation(config,G,lin_path)
 #print(G.predict(stoch_path.T).shape)
@@ -127,6 +133,7 @@ if config.interpolation:
 
 #print(line_eval(A))
 
+#latent_inter(config, stochSMC_path, G)
 #latent_inter(config, stoch_path, G)
 #latent_inter(config, lin_path, G)
 

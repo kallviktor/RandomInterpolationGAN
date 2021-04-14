@@ -35,9 +35,9 @@ config = model_config(dataset='lines',
 					  z_dim=2,
 					  z_start=0,
 					  z_end=1,
-					  int_time=0.03,
-					  int_steps=20,
-					  nmrParts=5000,
+					  int_time=0.5,
+					  int_steps=16,
+					  nmrParts=500,
 					  gf_dim=8,
 					  gfc_dim=128,
 					  dfc_dim=64,
@@ -78,29 +78,81 @@ else:
 	dcgan = model.dcgan(config)
 	dcgan.train(config)
 
+
+
+
+k = 50
+#paths_vis = np.zeros((k,config.int_steps,config.x_w,config.x_h,config.x_d))
+mean_dist_vec = np.zeros((k,1))
+mean_smoothness_vec = np.zeros((k,1))
+
+
 if config.interpolation:
+	for i in range(k):
+		stoch_path = InterpolStochSMC(G,D,GAN,config)
+		path_vis = G.predict(stoch_path.T)
+		#paths_vis[i,:,:,:,:] = path_vis
 
-	stoch_path = InterpolStochSMC(G,D,GAN,config)
-	#lin_path = linear_interpol(config)
+		#lin_path = linear_interpol(config)
+		mean_dist,mean_smoothness = line_eval(path_vis[np.newaxis,:])
 
-	vis_interpolation(config,G,stoch_path)
-	#vis_interpolation(config,G,lin_path)
-	#print(G.predict(stoch_path.T).shape)
-	A = G.predict(stoch_path.T)
-	A = A[np.newaxis,:]
+		mean_dist_vec[i] = mean_dist
+		mean_smoothness_vec[i] = mean_smoothness
+		print(i)
 
-	print(line_eval(A))
+	mean_dist = np.round(np.mean(mean_dist_vec),8)
+	mean_smoothness = np.round(np.mean(mean_smoothness_vec),8)
+	std_dist = np.round(np.std(mean_dist_vec),8)
+	std_smoothness = np.round(np.std(mean_smoothness_vec),8)
 
-	#A = G.predict(lin_path.T)
-	#A = A[np.newaxis,:]
+	print('Mean dist: {}, Std dist: {}'.format(mean_dist,std_dist))
+	print('Mean smoothness: {}, Std smoothness: {}'.format(mean_smoothness,std_smoothness))
 
-	#print(line_eval(A))
 
-	latent_inter(config, stoch_path, G)
-	#latent_inter(config, lin_path, G)
+
+
+#stoch_path = InterpolStochSMC(G,D,GAN,config)
+#lin_path = linear_interpol(config)
+
+#vis_interpolation(config,G,stoch_path)
+#vis_interpolation(config,G,lin_path)
+#print(G.predict(stoch_path.T).shape)
+#A = G.predict(stoch_path.T)
+#A = A[np.newaxis,:]
+
+#print(line_eval(A))
+
+#A = G.predict(lin_path.T)
+#A = A[np.newaxis,:]
+
+#print(line_eval(A))
+
+#latent_inter(config, stoch_path, G)
+#latent_inter(config, lin_path, G)
 
 #heat_map(GAN, config)
+
+
+
 #latent_visualization(config,G)
+
+
+
+"""
+
+point = np.array([[-2],[2]]).T
+
+#print(point)
+fake_img = G.predict(point)
+
+plt.figure(figsize=(10, 10))
+plt.imshow(fake_img[0,:,:,0],cmap='gray')
+
+filepath = '/Users/erikpiscator/Repositories/RandomInterpolationGAN/DCGAN_Interpoaltion_Keras/out/20210224-1456_lines/heatmap/test.png'
+plt.savefig(filepath)
+plt.close()
+
+"""
 
 
 

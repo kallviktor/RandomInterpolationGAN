@@ -5,9 +5,10 @@ import os
 import time
 import glob
 import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 
-def ker(h, a=1, b=1):
+def ker(h, a=2, b=5):
     
     """ 
     Eq. (9) in Hult et al.
@@ -140,8 +141,8 @@ def weight_func(z, z_dim, DoG):
 
     z = z.reshape(-1,z_dim)
 
-    #Dz = DoG.predict(z).reshape(-1)
-    Dz = track(z)
+    Dz = DoG.predict(z).reshape(-1)
+    #Dz = track(z)
     #Dz[Dz<0.3]=0
 
     weights = (Dz / (1 - Dz))**1
@@ -166,9 +167,9 @@ def vis_interpolation(config,G,path):
 
     if not os.path.exists(config.inter_dir):
         os.makedirs(config.inter_dir)
-
-    #path = path.reshape(-1,config.z_dim)
+    
     path = path.T
+
     fake_imgs = G.predict(path)
     #fake_imgs = 0.5 * fake_imgs + 0.5
 
@@ -268,12 +269,18 @@ def heat_map(DoG, config):
     zbatch = concatenate((zx, zy)).T
 
     scores = DoG.predict(zbatch).reshape(steps,steps)
-    #scores[scores<0.53]=0
-    im = plt.imshow(scores, cmap='hot')
 
-    plt.colorbar(im)
-    plt.xticks(arange(0, steps, skip),round(z1[0::skip],1),rotation='vertical')
+    plt.figure(figsize=(10, 10))
+
+    im = plt.imshow(scores, cmap='hot',extent=[0,steps,0,steps])
+    
+
+    plt.clim(0, 1)
+    plt.colorbar(im,fraction=0.046, pad=0.04,orientation='horizontal')
+    plt.xticks(arange(0, steps, skip),round(z1[0::skip],1),rotation='horizontal')
     plt.yticks(arange(0, steps, skip),round(z2[0::skip],1))
+
+    locs, labels = plt.yticks()
 
     filename = '/heatmap'
     filepath = dynamic_filepath(config.hm_dir,filename)
@@ -288,14 +295,16 @@ def latent_visualization(config,G):
     ymax = config.hm_ymax
     steps = config.hm_steps
 
-    if steps % 2 == 0:
-        steps += 1
+    #if steps % 2 == 0:
+    #    steps += 1
 
     skip = int((steps-1)/10)
 
 
     z1 = linspace(xmin, xmax, steps)
-    z2 = linspace(ymin, ymax, steps)
+    z2 = linspace(ymax, ymin, steps)
+
+    #print(z1)
 
     zx, zy = meshgrid(z1, z2)
 
@@ -303,17 +312,27 @@ def latent_visualization(config,G):
     zy = zy.reshape(1,-1)
 
     zbatch = concatenate((zx, zy)).T
-    #print(zbatch.shape)
-    #z_grid = np.dstack(np.meshgrid(z1, z2))
 
-    #x_pred_grid = vae.generate(z_grid.reshape(m*m, 2),False).numpy().reshape(m, m, 32, 32)
+    #zbatch_1 = zbatch[0]
+    #print(zbatch_1[np.newaxis,:])
+
 
     imgs = G.predict(zbatch).reshape(steps, steps, 32, 32)
-    #print(imgs.shape)
-    #print(block(list(map(list, imgs))).shape)
-    plt.figure(figsize=(10, 10))
-    plt.imshow(block(list(map(list, imgs))),origin='lover',cmap='gray',extent=[xmin,xmax,ymin,ymax])
 
+    #print(imgs.shape)
+
+    #imgs = imgs.reshape(steps, steps, 32, 32)
+
+    #img = imgs[0,:,:,0]
+
+    #print(imgs.shape)
+
+    #print(block(list(map(list, imgs))).shape)
+
+    plt.figure(figsize=(10, 10))
+    plt.imshow(block(list(map(list, imgs))),cmap='gray',extent=[xmin,xmax,ymin,ymax])
+    #plt.imshow(img,origin='lover',cmap='gray',extent=[xmin,xmax,ymin,ymax])
+    #plt.imshow(img,cmap='gray')
     filename = '/latent_vis'
     filepath = dynamic_filepath(config.hm_dir,filename)
     plt.savefig(filepath)
@@ -334,7 +353,7 @@ def latent_inter(config, path, G):
 
 
     z1 = linspace(xmin, xmax, steps)
-    z2 = linspace(ymin, ymax, steps)
+    z2 = linspace(ymax, ymin, steps)
 
     zx, zy = meshgrid(z1, z2)
 
@@ -342,16 +361,13 @@ def latent_inter(config, path, G):
     zy = zy.reshape(1,-1)
 
     zbatch = concatenate((zx, zy)).T
-    #print(zbatch.shape)
-    #z_grid = np.dstack(np.meshgrid(z1, z2))
 
-    #x_pred_grid = vae.generate(z_grid.reshape(m*m, 2),False).numpy().reshape(m, m, 32, 32)
 
     imgs = G.predict(zbatch).reshape(steps, steps, 32, 32)
     #print(imgs.shape)
     #print(block(list(map(list, imgs))).shape)
     plt.figure(figsize=(10, 10))
-    plt.imshow(block(list(map(list, imgs))),origin='lover',cmap='gray',extent=[xmin,xmax,ymin,ymax])
+    plt.imshow(block(list(map(list, imgs))),cmap='gray',extent=[xmin,xmax,ymin,ymax])
 
     
     x = path[0,:]

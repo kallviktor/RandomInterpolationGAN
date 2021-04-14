@@ -50,6 +50,7 @@ def closest_line(query_lines, metric='cosine'):
     min_dist_idx = np.argmin(distances, axis=-1)
     min_dist = distances[np.arange(distances.shape[0]), min_dist_idx]
     angles = np.array([angles[n] for n in min_dist_idx])
+    
     return min_dist, angles
 
 
@@ -93,6 +94,7 @@ def line_eval(interpolated_lines):
     min_dist, angles = closest_line(
         interpolated_lines.reshape((-1,) + original_shape[2:]))
     mean_distance = np.mean(min_dist)
+    #std_distance = np.
     smoothness_scores = smoothness_score(
         angles.reshape(original_shape[0], original_shape[1]))
     nan_scores = np.isnan(smoothness_scores)

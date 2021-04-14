@@ -40,8 +40,8 @@ def InterpolStochSMC(generator, discriminator, DoG, config):
 
     zDim = config.z_dim
 
-    z0 = array([[0.5],[0.5]])
-    zT = array([[-0.5],[-1]])
+    z0 = array([[0.5],[-1.5]])
+    zT = array([[-1.5],[1]])
     """
     z0=array([[-1.39692937],
         [-0.25102801],
@@ -244,8 +244,8 @@ def InterpolStochSMC(generator, discriminator, DoG, config):
 
 def linear_interpol(config):
     # Linear interpolation
-    start = array([[0.5],[0.5]])
-    end = array([[-0.5],[-1]])
+    start = array([[-1.5],[1]])
+    end = array([[0.85],[1.2]])
 
     """
     start=array([[-1.39692937],

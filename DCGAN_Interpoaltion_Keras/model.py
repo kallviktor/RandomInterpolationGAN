@@ -94,6 +94,14 @@ class dcgan(object):
 		G.add(BatchNormalization(momentum=0.9))
 		G.add(Activation('relu'))
 
+		
+
+		G.add(Conv2D(filters=int(config.gfc_dim/4), kernel_size=3, padding='same'))
+		G.add(BatchNormalization(momentum=0.9))
+		G.add(Activation('relu'))
+		
+		
+
 		G.add(Conv2D(filters=1,kernel_size=3,padding='same'))
 		G.add(Activation('tanh'))
 

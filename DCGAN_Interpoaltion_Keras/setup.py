@@ -7,6 +7,12 @@ class model_config(object):
 				 dataset='mnist',
 				 loadmodel=False,
 				 interpolation=False,
+				 metrics=False,
+				 heat_map=False,
+				 latent_viz=False,
+				 metrics_k=10,
+				 metrics_type='linear',
+				 interpol_types={'linear':1},
 				 epochs=100,
 				 batch_size=64,
 				 lines_batches=1000,
@@ -50,6 +56,13 @@ class model_config(object):
 												loadmodel=False --> train a new model.
 				interpolation:	[bool]		interpolation=True --> run the interpolation code.
 												interpolation=False --> no interpolation.
+				metrics:		[bool]		metrics=True --> run 'metrics_k' interpolations and
+												calculate metrics.
+				heat_map:		[bool]		heat_map=True --> create a heat_map of D with 'hm_' parameters.
+				latent_viz:		[bool]		latent_viz=True --> vizualize latent space with "hm_" parameters.
+				metrics_k:		[int]		Number of interpolations to run when evaluating metrics.
+				metrics_type:	[str]		Type of interpolation to calculate metrics on; 'stochSMC', 'stoch', or 'linear'.
+				interpol_types:	[dict]		Dictionary of type and number of interpolations.
 				epochs:			[int]		Number of times the model is trained on the whole dataset.
 				batch_size:		[int]		Number of datapoint in each batch of the training. Determines
 											number of batches in one epoch.
@@ -138,6 +151,11 @@ class model_config(object):
 		self.vis_freq 		= vis_freq
 		self.plottrain_freq = plottrain_freq
 		self.interpolation 	= interpolation
+		self.metrics 		= metrics
+		self.latent_viz		= latent_viz
+		self.metrics_k 		= metrics_k
+		self.metrics_type	= metrics_type
+		self.interpol_types	= interpol_types
 		self.batch_size 	= batch_size
 		self.epochs 		= epochs
 		self.z_dim 			= z_dim
@@ -153,6 +171,7 @@ class model_config(object):
 		self.c_dim 			= c_dim
 
 		#heatmap setup
+		self.heat_map		= heat_map
 		self.hm_xmin 		= hm_xmin
 		self.hm_xmax		= hm_xmax
 		self.hm_ymin		= hm_ymin
@@ -169,7 +188,8 @@ class model_config(object):
 			self.load_dir 	= load_dir
 			self.save_dir 	= str(Path(load_dir).parent.parent)
 			self.inter_dir 	= self.save_dir+'/interpolation'
-			self.hm_dir			= self.save_dir+'/heatmap'
+			self.hm_dir		= self.save_dir+'/heatmap'
+			self.latvis_dir		= self.save_dir+'/latent_viz'
 
 		else:
 
@@ -179,4 +199,5 @@ class model_config(object):
 			self.images_dir = self.save_dir+'/imgs'
 			self.inter_dir 	= self.save_dir+'/interpolation'
 			self.hm_dir			= self.save_dir+'/heatmap'
+			self.latvis_dir		= self.save_dir+'/latent_viz'
 		

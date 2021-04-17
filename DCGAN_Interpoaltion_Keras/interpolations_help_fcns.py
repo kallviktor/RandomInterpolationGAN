@@ -142,10 +142,11 @@ def weight_func(z, z_dim, DoG):
     z = z.reshape(-1,z_dim)
 
     Dz = DoG.predict(z).reshape(-1)
+
     #Dz = track(z)
     #Dz[Dz<0.3]=0
 
-    weights = (Dz / (1 - Dz))**1
+    weights = (Dz / (1 - Dz))**4
 
 
     
@@ -157,7 +158,7 @@ def explicit(l):
 
     return max_idx, max_val
 
-def vis_interpolation(config,G,path):
+def vis_interpolation(config,G,paths):
     
     if not os.path.exists(config.out_dir):
             os.makedirs(config.out_dir)
@@ -167,27 +168,32 @@ def vis_interpolation(config,G,path):
 
     if not os.path.exists(config.inter_dir):
         os.makedirs(config.inter_dir)
-    
-    path = path.T
 
-    fake_imgs = G.predict(path)
-    #fake_imgs = 0.5 * fake_imgs + 0.5
+    i = 0
+    for key in config.interpol_types.keys():
+        for j in range(config.interpol_types[key]):
 
-    fig,axs = plt.subplots(1,config.int_steps)
-    count = 0
-    for i in range(config.int_steps):
+            path = paths[i,:,:].T
+            fake_imgs = G.predict(path)
+            #fake_imgs = 0.5 * fake_imgs + 0.5
 
-        axs[i].imshow(fake_imgs[count,:,:,0], cmap='gray')
-        axs[i].axis('off')
-        count += 1
+            fig,axs = plt.subplots(1,config.int_steps)
+            count = 0
 
-    #Check if filename exists and if so, save with same but new ending.
-    filename = '/inter_{}steps_{}t'.format(config.int_steps,str(config.int_time).replace('.',''))
+            for k in range(config.int_steps):
 
-    filepath = dynamic_filepath(config.inter_dir,filename)
+                axs[k].imshow(fake_imgs[count,:,:,0], cmap='gray')
+                axs[k].axis('off')
+                count += 1
 
-    plt.savefig(filepath)  
-    plt.close()
+            #Check if filename exists and if so, save with same but new ending.
+            filename = '/inter_{}_{}steps_{}t'.format(key,config.int_steps,str(config.int_time).replace('.',''))
+
+            filepath = dynamic_filepath(config.inter_dir,filename)
+
+            plt.savefig(filepath)  
+            plt.close()
+            i += 1
 
 def dynamic_filepath(save_dir,filename):
     #Check if filename exists and if so, save with same but new ending.
@@ -282,12 +288,21 @@ def heat_map(DoG, config):
 
     locs, labels = plt.yticks()
 
-    filename = '/heatmap'
+    filename = '/heatmap_{}'.format(config.hm_steps)
     filepath = dynamic_filepath(config.hm_dir,filename)
     plt.savefig(filepath)
     plt.close()
 
 def latent_visualization(config,G):
+
+    if not os.path.exists(config.out_dir):
+        os.makedirs(config.out_dir)
+
+    if not os.path.exists(config.save_dir):
+        os.makedirs(config.save_dir)
+
+    if not os.path.exists(config.latvis_dir):
+        os.makedirs(config.latvis_dir)
 
     xmin = config.hm_xmin
     xmax = config.hm_xmax
@@ -295,16 +310,11 @@ def latent_visualization(config,G):
     ymax = config.hm_ymax
     steps = config.hm_steps
 
-    #if steps % 2 == 0:
-    #    steps += 1
-
     skip = int((steps-1)/10)
 
 
     z1 = linspace(xmin, xmax, steps)
     z2 = linspace(ymax, ymin, steps)
-
-    #print(z1)
 
     zx, zy = meshgrid(z1, z2)
 
@@ -313,32 +323,27 @@ def latent_visualization(config,G):
 
     zbatch = concatenate((zx, zy)).T
 
-    #zbatch_1 = zbatch[0]
-    #print(zbatch_1[np.newaxis,:])
-
-
     imgs = G.predict(zbatch).reshape(steps, steps, 32, 32)
 
-    #print(imgs.shape)
-
-    #imgs = imgs.reshape(steps, steps, 32, 32)
-
-    #img = imgs[0,:,:,0]
-
-    #print(imgs.shape)
-
-    #print(block(list(map(list, imgs))).shape)
 
     plt.figure(figsize=(10, 10))
     plt.imshow(block(list(map(list, imgs))),cmap='gray',extent=[xmin,xmax,ymin,ymax])
-    #plt.imshow(img,origin='lover',cmap='gray',extent=[xmin,xmax,ymin,ymax])
-    #plt.imshow(img,cmap='gray')
-    filename = '/latent_vis'
-    filepath = dynamic_filepath(config.hm_dir,filename)
+
+    filename = '/latent_vis_{}'.format(config.hm_steps)
+    filepath = dynamic_filepath(config.latvis_dir,filename)
     plt.savefig(filepath)
     plt.close()
 
-def latent_inter(config, path, G):
+def latent_inter(config, paths, G):
+
+    if not os.path.exists(config.out_dir):
+            os.makedirs(config.out_dir)
+
+    if not os.path.exists(config.save_dir):
+        os.makedirs(config.save_dir)
+
+    if not os.path.exists(config.inter_dir):
+        os.makedirs(config.inter_dir)
 
     xmin = config.hm_xmin
     xmax = config.hm_xmax
@@ -364,23 +369,42 @@ def latent_inter(config, path, G):
 
 
     imgs = G.predict(zbatch).reshape(steps, steps, 32, 32)
-    #print(imgs.shape)
-    #print(block(list(map(list, imgs))).shape)
+
     plt.figure(figsize=(10, 10))
     plt.imshow(block(list(map(list, imgs))),cmap='gray',extent=[xmin,xmax,ymin,ymax])
 
     
-    x = path[0,:]
-    y = path[1,:]
-    plt.plot(x, y, linestyle='--', marker='o', color='b')
+    i = 0
+    for key in config.interpol_types.keys():
+        for j in range(config.interpol_types[key]):
 
+            path = paths[i,:,:].T
+
+            x = path[:,0]
+            y = path[:,1]
+            
+            if key == 'linear':
+                color = 'b'
+            elif key == 'stoch':
+                color = 'r'
+            elif key == 'stochSMC':
+                color = 'y'
+            
+            """
+            if j == 0:
+                color = 'b'
+            elif j == 1:
+                color = 'r'
+            elif j == 2:
+                color = 'y'
+            """
+            plt.plot(x, y, linestyle='--', marker='o', color=color)
+
+            i += 1
     filename = '/inter_latent_vis'
     filepath = dynamic_filepath(config.inter_dir,filename)
     plt.savefig(filepath)
     plt.close()
-
-
-
 
 
 

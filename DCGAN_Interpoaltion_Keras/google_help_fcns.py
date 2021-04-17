@@ -23,6 +23,7 @@ from __future__ import print_function
 import numpy as np
 import scipy.spatial
 from lines import draw_line
+from interpolation import linear_interpol, stochastic_interpol, stochasticSMC_interpol
 
 
 def closest_line(query_lines, metric='cosine'):
@@ -106,3 +107,44 @@ def line_eval(interpolated_lines):
         sum_smoothness = np.sum(smoothness_scores[np.logical_not(nan_scores)])
         mean_smoothness = sum_smoothness/float(len(nan_scores))
     return np.float32(mean_distance), np.float32(mean_smoothness)
+
+
+def metrics(G,D,GAN,config):
+
+    k = config.metrics_k
+
+    mean_dist_vec = np.zeros((k,1))
+    mean_smoothness_vec = np.zeros((k,1))
+
+    print('')
+    print('Calculating {} metrics...'.format(config.metrics_type))
+    print('')
+
+    for i in range(k):
+
+        print('Interpolation {}/{}.'.format(i+1,config.metrics_k))
+
+        if config.metrics_type == 'linear':
+            path = linear_interpol(config)
+        elif config.metrics_type == 'stoch':
+            path = stochastic_interpol(G,D,GAN,config)
+        elif config.metrics_type == 'stochSMC':
+            path = stochasticSMC_interpol(G,D,GAN,config)
+        
+
+        path_vis = G.predict(path.T)
+        
+        mean_dist,mean_smoothness = line_eval(path_vis[np.newaxis,:])
+
+        mean_dist_vec[i] = mean_dist
+        mean_smoothness_vec[i] = mean_smoothness
+        
+
+    mean_dist = np.round(np.mean(mean_dist_vec),8)
+    mean_smoothness = np.round(np.mean(mean_smoothness_vec),8)
+    std_dist = np.round(np.std(mean_dist_vec),8)
+    std_smoothness = np.round(np.std(mean_smoothness_vec),8)
+
+    print('')
+    print('Mean dist: {}, Std dist: {}'.format(mean_dist,std_dist))
+    print('Mean smoothness: {}, Std smoothness: {}'.format(mean_smoothness,std_smoothness))

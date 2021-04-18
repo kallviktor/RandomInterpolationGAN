@@ -1,5 +1,6 @@
-from numpy import exp, abs, linspace, zeros, array, ones, kron, where, eye, tile, meshgrid, concatenate, arange, round, block
+from numpy import exp, abs, linspace, zeros, array, ones, matmul, kron, where, eye, tile, meshgrid, concatenate, arange, round, block
 from numpy.random import multivariate_normal, normal
+from numpy.linalg import inv
 import numpy as np
 import os
 import time
@@ -9,6 +10,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 
 def ker(h, a=2, b=5):
+    #2,5
     
     """ 
     Eq. (9) in Hult et al.
@@ -67,7 +69,177 @@ def khat_cov(tmat, smat, T):
     T2 = num / denom
     
     return T1 + T2
+"""
+from interpolations_help_fcns import ker, khat_cov, muhat_mean
+from numpy import linspace, array, zeros, tile, matmul, kron, eye, ravel, ones
+from numpy.linalg import inv
 
+T = 1
+N = 5
+
+z0 = array([[0],[0]])
+zT = array([[1],[1]])
+
+zdim = z0.shape[0]
+
+def linear_interpol(start, end, N):
+    # Linear interpolation
+    t     = array(linspace(0, 1, N))
+    z_seq = end * t + (1 - t) * start
+    return z_seq
+
+path = linear_interpol(z0, zT, N).T
+
+Delta = T / (N-1)
+times = linspace(0,T,N)
+
+times = array([times])
+
+smat = tile(times, (N, 1))
+tmat = smat.transpose(1,0)
+
+Sigma = khat_cov(smat, tmat, T)
+Mu = muhat_mean(times, z0, zT, T)
+
+# Goal: for a process (z{1} , z{2} , ... , z{dim}) running over N steps, starting in z0 and ending in zT, construct the mean for every coordinate process z{i}
+# and with a time horizon T
+
+MeanMatrix = muhat_mean(times, z0, zT, T).T
+
+# Column i in MeanMatrix is the mean of coordinate process z{i}, where z{i} is a bridge between z0{i} to zT{i}
+
+Sigma = khat_cov(smat, tmat, T)
+SigmaBlock = kron(eye(zdim), Sigma)
+
+# SigmaBlock is blockdiagonal matrix with Sigma, which is the covariance matrix of z{i}, on the diagonal. Note that Sigma is the same for each z{i}, so it
+# does in fact not depend on z0{i} and zT{i} (which is the difference between coordinate processes)
+
+# New goal: find expression of joint distribution for (z0 , z1 , z2 , ... , zi , zT), where zj = (zj{1} , zj{2} , ... , zj{dim}) with j = step and
+# 1 <= i <= N-1. Here we use notation zT = zN.
+"""
+def NewjointCov(Sigma, step):
+
+    SigmaCur = zeros((step,step))
+
+    SigmaCur[0:step,0:step] = Sigma[1:step+1,1:step+1]
+    """
+    SigmaCur[-1,0:step+1] = Sigma[-1,0:step+1]
+    SigmaCur[0:step+1,-1] = Sigma[0:step+1,-1]
+    SigmaCur[-1,-1] = Sigma[-1,-1]
+
+    SigmaCur[[0,step],:] = SigmaCur[[step,0],:]
+    SigmaCur[:,[0,step]] = SigmaCur[:,[step,0]]
+    """
+
+    SigmaCur = np.flip(SigmaCur, 0)
+    SigmaCur = np.flip(SigmaCur, 1)
+
+    return SigmaCur
+"""
+i = 2
+
+SigmaNew = NewjointCov(Sigma, i)
+SigmaNewBlock = kron(eye(zdim), SigmaNew)
+"""
+# Here we have also rearanged the vector (z0 , z1 , z2 , ... , zi , zT) -> (zi , z1 , z2 , ... , z0 , zT). 
+
+# Newer goal: do the same for the mean. That is, what is the mean for (zi , z1 , z2 , ... , z0 , zT)?
+
+def NewjointMean(Mean, step, zdim):
+
+    MuCur = zeros((step,zdim))
+    
+    MuCur[0:step,:] = Mean[1:step+1,:]
+
+    """
+    MuCur[step+1,:] = Mean[-1,:]
+    MuCur[[0,step],:] = MuCur[[step,0],:]
+
+    """
+
+    MuCur = np.flip(MuCur,0)
+
+    return MuCur
+"""
+MeanMatrixNew = NewjointMean(MeanMatrix, i, zdim)
+"""
+# Ultimate goal: find the condtional distribution of Zi | Z1 , Z2 , ... , Z0 , ZT. The standard formulas give us the answer, however it is a little tricky
+# to make it all happen at once (without for-loops)
+
+# First, what is the conditonal mean? Let's go:
+
+def MeanConditional(means, sigma, path, step, zdim):
+
+    #path[[0,step],:] = path[[step,0],:]
+    #print('path: ',path)
+
+    path = path[1:step,:]
+
+    #print(path)
+
+    path = np.flip(path,0)
+
+    #print(path)
+
+    Zhist = zeros((step-1,zdim))
+
+    Zhist = path.T
+    #Zhist[step,:] = path[-1,:]
+    Zhist = Zhist.ravel().T
+
+    #print(sigma[1:,1:])
+
+    k22Inv = inv(sigma[1:,1:])
+
+    #print(k22Inv)
+
+    k22InvBlock = kron(eye(zdim),k22Inv)
+
+    k12 = sigma[0,1:]
+
+    k12Block = kron(eye(zdim),k12)
+
+    m1 = means[0,:].T
+
+    #print("m1 shape= " , m1.shape)
+
+
+    m2 = means[1:,:].T
+    m2 = m2.ravel().T
+
+
+    #print(m2)
+    #print('hist: ',Zhist)
+    #print('')
+    #print(matmul(k12Block,k22InvBlock))
+
+
+    return m1 + matmul(matmul(k12Block,k22InvBlock),Zhist-m2)
+
+"""
+MeanCond = MeanConditional(MeanMatrixNew, SigmaNew, path, i, zdim)
+"""
+# Also, find the conditional covariance:
+
+
+
+def CovConditional(sigma, zdim):
+
+    k11 = sigma[0,0]
+    k12 = sigma[0,1:]
+    k22Inv = inv(sigma[1:,1:])
+    k21 = sigma[1:,0]
+
+    std = k11 - matmul(matmul(k12,k22Inv),k21)
+
+    return kron(eye(zdim),std)
+"""
+CovCond = CovConditional(SigmaNew, zdim)
+
+print(MeanCond)
+
+print(CovCond)
+"""
 
 def BPvec(z0, zT, T, N, nParticles):
     
@@ -143,10 +315,15 @@ def weight_func(z, z_dim, DoG):
 
     Dz = DoG.predict(z).reshape(-1)
 
+    #Dz = np.zeros(len(z))*0+0.5
+    #Dz = Dz.T
+
     #Dz = track(z)
     #Dz[Dz<0.3]=0
 
-    weights = (Dz / (1 - Dz))**4
+
+
+    weights = (Dz / (1 - Dz))**1
 
 
     

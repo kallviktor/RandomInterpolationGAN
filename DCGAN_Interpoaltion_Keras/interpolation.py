@@ -106,11 +106,24 @@ def stochasticSMC_interpol(generator, discriminator, DoG, config,z0=None,zT=None
     # weights is a list of weights for each particle's next trajectory step (the i:th element of weights is the associated
     # weight to the particle with index i), data type numpy.array shape = (n_parts, )
     
-    dt = T / N
+    #dt = T / N
     S_re = randint(0, 1, n_parts)
     weights = zeros(n_parts)
     
-    for step in range(N-2):
+    t = array([linspace(0,T,N)])
+    smat = tile(t, (N, 1))
+    tmat = smat.transpose(1,0)
+
+    Mean_Matrix = muhat_mean(t,z0,zT,T).T
+    Cov_Matrix = khat_cov(smat, tmat, T)
+
+
+    #print(Cov_Matrix)
+    #print(Mean_Matrix)
+
+    PartsPaths_Temp = PartsPaths
+
+    for step in range(N-1):
         
         if not config.metrics:
             print_interpolation_progress(N,step)
@@ -125,9 +138,9 @@ def stochasticSMC_interpol(generator, discriminator, DoG, config,z0=None,zT=None
         # parts is a 3-D tensor that stores the generated Gaussian bridges for each of the n_parts particles. Note: number of
         # columns (= Ncur) decreases with each loop, data type numpy.array shape = (n_parts, zDim, Ncur)
         
-        Tcur = T - dt * step
-        Ncur = N - step
-        parts = zeros((n_parts, zDim, Ncur))
+        #Tcur = T - dt * step
+        #Ncur = N - step
+        #parts = zeros((n_parts, zDim, Ncur))
         
         # surv_freq, short for 'survivor-frequency', is a dictionary constructed from S_re where each key is an index (survivor
         # of the resampling step) and the corresponding value is the frequency that index appeared in S_re, data type python
@@ -153,23 +166,75 @@ def stochasticSMC_interpol(generator, discriminator, DoG, config,z0=None,zT=None
         pointer = 0
         nmr_res = len(resampled)
         
+
+
+
+        Sub_Cov_Joint = NewjointCov(Cov_Matrix, step+1)
+        Sub_Mean_Joint = NewjointMean(Mean_Matrix, step+1, zDim)
+
+        #print(Sub_Cov_Joint)
+        #print(Sub_Mean_Joint.shape)
+        
+
+        Sub_Cov_Cond = CovConditional(Sub_Cov_Joint,zDim)
+
+        #print(Sub_Cov_Cond)
+
+        
+
         for i in range(nmr_res):
-            
+
             res_idx = resampled[i]
             f = freq[i]
             
-            z0_curr = PartsPaths[res_idx,:,step].reshape(zDim,-1)
-            parts[pointer:pointer+f,:,:] = BPvec(z0_curr, zT, Tcur, Ncur, f)
+            path = PartsPaths[res_idx,:,:]
+            
+            if step == 0:
+                Sub_Mean_Cond = Sub_Mean_Joint[0,:].T
+                #print(Sub_Mean_Cond.shape)
+            else:
+                Sub_Mean_Cond = MeanConditional(Sub_Mean_Joint,Sub_Cov_Joint,path.T,step+1,zDim)
+
+            #print(Sub_Mean_Cond)
+            
+            
+            BatchParts = multivariate_normal(Sub_Mean_Cond, cov=Sub_Cov_Cond, size=f)
+
+            #print('f: ',f)
+            #print('Batch: ',BatchParts)
+
+            #BatchParts = BatchParts.reshape((f,zDim))
+            #print('') 
+            #print(BatchParts.shape)
+            #print(PartsPaths.shape)
+
+            PartsPaths_Temp[pointer:pointer+f,:,:] = path
+            PartsPaths_Temp[pointer:pointer+f,:,step+1] = BatchParts
+
+            #PartsPaths[pointer:pointer+f,:,step+1] = BatchParts
+
+            """
+            print(2*'\n')
+            print('paths: ',PartsPaths)
+            print('\n')
+            print('batch: ',BatchParts)
+            """
+
+            #z0_curr = PartsPaths[res_idx,:,step].reshape(zDim,-1)
+            #parts[pointer:pointer+f,:,:] = BPvec(z0_curr, zT, Tcur, Ncur, f)
             
             pointer += f
-        
+
+        PartsPaths = PartsPaths_Temp
+
+        #print('parts: ',PartsPaths)
         # Second inner for-loop ================================================================================================
         # Here we perform the resampling step of the particle filter. Note that the 3-D tensor parts contains proposed
         # particle paths, however only the second position of each particle path, i.e. the second column of each sheet in parts,
         # is of interest (since we evolve the particle filter stepwise). Each such proposed next-step is given a weight assigned
         # by the function weight_func (which in essence is the combined DoG network).
 
-        z = parts[:,:,1]
+        z = PartsPaths[:,:,step+1]
 
         weights = weight_func(z, zDim, DoG)
         
@@ -180,10 +245,10 @@ def stochasticSMC_interpol(generator, discriminator, DoG, config,z0=None,zT=None
         S_re = choice(S, n_parts, replace=True, p=weights)
         
         # Storing weights for each new position of every particle path
-        weights_all[:,step] = weights[S_re]
+        #weights_all[:,step] = weights[S_re]
 
         # Update particle paths
-        PartsPaths = np.concatenate([PartsPaths[S_re,:,0:step+1],parts[S_re,:,1:]],2)
+        PartsPaths = PartsPaths[S_re,:,:]
     
     if not config.metrics:
         print_interpolation_complete()
@@ -249,6 +314,12 @@ def stochasticSMC_interpol(generator, discriminator, DoG, config,z0=None,zT=None
         curpoint = interpol[:,numSteps-1]
     """
     #print(interpol)
+    #print(PartsPaths[1,:,:])
+    #print(PartsPaths.shape)
+    #print(interpol)
+    #print(z0)
+    print(zT)
+    print(interpol)
     return interpol,z0,zT
 
 def linear_interpol(config,z0,zT):
@@ -303,7 +374,7 @@ def stochastic_interpol(generator, discriminator, DoG, config,z0,zT):
     n_parts = 1
 
     interpol = BPvec(z0, zT, T, N, n_parts)
-
+    print(zT)
     return interpol[0,:,:],z0,zT
 
 

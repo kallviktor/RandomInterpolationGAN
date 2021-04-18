@@ -3,7 +3,7 @@ Change values in the model_config input in order to change setup."""
 
 import model
 from interpolation import stochasticSMC_interpol, linear_interpol, stochastic_interpol
-from interpolations_help_fcns import vis_interpolation, heat_map, latent_visualization, latent_inter
+from interpolations_help_fcns import vis_interpolation, heat_map, latent_visualization, latent_inter, NewjointCov
 from setup import model_config
 from model_help_fcns import *
 from google_help_fcns import *
@@ -32,7 +32,7 @@ config = model_config(dataset='lines',
 					  latent_viz=False,
 					  metrics_k=3,
 					  metrics_type='stochSMC',
-					  interpol_types={'stoch':1,'stochSMC':1},
+					  interpol_types={'stochSMC':1,'stoch':1},
 					  thresh=0.1,
 					  epochs=30,
 					  batch_size=64,
@@ -40,7 +40,7 @@ config = model_config(dataset='lines',
 					  z_dim=2,
 					  z_start=0,
 					  z_end=1,
-					  int_time=0.4,
+					  int_time=1,
 					  int_steps=16,
 					  nmrParts=500,
 					  gf_dim=8,
@@ -84,13 +84,12 @@ else:
 	dcgan.train(config)
 
 
-
 if config.interpolation:
 
 	nmr_interpols = sum(config.interpol_types.values())
 	paths = np.zeros((nmr_interpols,config.z_dim,config.int_steps))
-	z0 = np.array([[-1.5],[-1.5]])
-	zT = np.array([[1],[1]])
+	z0 = np.array([[-1],[-1.5]])
+	zT = np.array([[1],[1.5]])
 
 	j = 0
 	for key in config.interpol_types.keys():
@@ -110,6 +109,7 @@ if config.interpolation:
 
 	if config.z_dim == 2:
 		latent_inter(config, paths, G)
+		#pass
 
 
 if config.metrics:

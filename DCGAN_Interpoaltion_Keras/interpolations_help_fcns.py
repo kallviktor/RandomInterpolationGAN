@@ -189,7 +189,9 @@ def MeanConditional(means, sigma, path, step, zdim):
 
     #print(sigma[1:,1:])
 
-    k22Inv = inv(sigma[1:,1:])
+    k22 = sigma[1:,1:]
+
+    k22Inv = inv(k22 + np.eye(len(k22))*10**(-5))
 
     #print(k22Inv)
 
@@ -227,7 +229,9 @@ def CovConditional(sigma, zdim):
 
     k11 = sigma[0,0]
     k12 = sigma[0,1:]
-    k22Inv = inv(sigma[1:,1:])
+    k22 = sigma[1:,1:]
+
+    k22Inv = inv(k22 + np.eye(len(k22))*10**(-5))
     k21 = sigma[1:,0]
 
     std = k11 - matmul(matmul(k12,k22Inv),k21)

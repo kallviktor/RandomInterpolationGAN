@@ -25,19 +25,19 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 #create configuration object
 config = model_config(dataset='lines',
-					  loadmodel=True,
-					  interpolation=True,
+					  loadmodel=False,
+					  interpolation=False,
 					  metrics=False,
 					  heat_map=False,
 					  latent_viz=False,
-					  metrics_k=3,
-					  metrics_type='stochSMC',
-					  interpol_types={'stochSMC':1,'stoch':1},
+					  metrics_k=50,
+					  metrics_type='linear',
+					  interpol_types={'stochSMC':1,'stoch':1,'linear':1},
 					  thresh=0.1,
 					  epochs=30,
 					  batch_size=64,
 					  lines_batches=200,
-					  z_dim=2,
+					  z_dim=64,
 					  z_start=0,
 					  z_end=1,
 					  int_time=1,
@@ -81,15 +81,19 @@ else:
 
 	print_training_setup(config)
 	dcgan = model.dcgan(config)
+	print(dcgan.G.summary())
+	print(dcgan.D.summary())
 	dcgan.train(config)
-
 
 if config.interpolation:
 
 	nmr_interpols = sum(config.interpol_types.values())
 	paths = np.zeros((nmr_interpols,config.z_dim,config.int_steps))
-	z0 = np.array([[-1],[-1.5]])
-	zT = np.array([[1],[1.5]])
+	#z0 = np.array([[],[]])
+	#zT = np.array([[],[]])
+
+	z0 = np.array([[-1.5],[-1.5]])
+	zT = np.array([[1],[1]])
 
 	j = 0
 	for key in config.interpol_types.keys():

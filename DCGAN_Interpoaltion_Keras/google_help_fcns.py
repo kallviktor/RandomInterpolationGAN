@@ -124,12 +124,15 @@ def metrics(G,D,GAN,config):
 
         print('Interpolation {}/{}.'.format(i+1,config.metrics_k))
 
+        z0 = np.array([[],[]])
+        zT = np.array([[],[]])
+
         if config.metrics_type == 'linear':
-            path = linear_interpol(config)
+            path,_,_ = linear_interpol(config,z0,zT)
         elif config.metrics_type == 'stoch':
-            path = stochastic_interpol(G,D,GAN,config)
+            path,_,_ = stochastic_interpol(G,D,GAN,config,z0,zT)
         elif config.metrics_type == 'stochSMC':
-            path = stochasticSMC_interpol(G,D,GAN,config)
+            path,_,_ = stochasticSMC_interpol(G,D,GAN,config,z0,zT)
         
 
         path_vis = G.predict(path.T)
@@ -142,9 +145,17 @@ def metrics(G,D,GAN,config):
 
     mean_dist = np.round(np.mean(mean_dist_vec),8)
     mean_smoothness = np.round(np.mean(mean_smoothness_vec),8)
-    std_dist = np.round(np.std(mean_dist_vec),8)
+    std_dist = np.round(np.std(mean_dist_vec,0),8)
     std_smoothness = np.round(np.std(mean_smoothness_vec),8)
+
+    min_dist = np.round(np.min(mean_dist_vec),8)
+    min_smoothness = np.round(np.min(mean_smoothness_vec,0),8)
 
     print('')
     print('Mean dist: {}, Std dist: {}'.format(mean_dist,std_dist))
     print('Mean smoothness: {}, Std smoothness: {}'.format(mean_smoothness,std_smoothness))
+    #print('Min dist: {}'.format(min_dist))
+    #print('Min smoothness: {}'.format(min_smoothness))
+
+
+    #print(mean_smoothness_vec)

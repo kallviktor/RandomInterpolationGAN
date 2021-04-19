@@ -123,7 +123,7 @@ def stochasticSMC_interpol(generator, discriminator, DoG, config,z0=None,zT=None
 
     PartsPaths_Temp = PartsPaths
 
-    for step in range(N-1):
+    for step in range(N-2):
         
         if not config.metrics:
             print_interpolation_progress(N,step)
@@ -318,8 +318,8 @@ def stochasticSMC_interpol(generator, discriminator, DoG, config,z0=None,zT=None
     #print(PartsPaths.shape)
     #print(interpol)
     #print(z0)
-    print(zT)
-    print(interpol)
+    #print(zT)
+    #print(interpol)
     return interpol,z0,zT
 
 def linear_interpol(config,z0,zT):
@@ -374,7 +374,7 @@ def stochastic_interpol(generator, discriminator, DoG, config,z0,zT):
     n_parts = 1
 
     interpol = BPvec(z0, zT, T, N, n_parts)
-    print(zT)
+    
     return interpol[0,:,:],z0,zT
 
 

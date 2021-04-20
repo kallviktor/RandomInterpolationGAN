@@ -3,7 +3,7 @@ Change values in the model_config input in order to change setup."""
 
 import model
 from interpolation import stochasticSMC_interpol, linear_interpol, stochastic_interpol
-from interpolations_help_fcns import vis_interpolation, heat_map, latent_visualization, latent_inter, NewjointCov
+from interpolations_help_fcns import vis_interpolation, heat_map, latent_visualization, latent_inter, NewjointCov, get_valid_code
 from setup import model_config
 from model_help_fcns import *
 from google_help_fcns import *
@@ -25,14 +25,14 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 #create configuration object
 config = model_config(dataset='lines',
-					  loadmodel=False,
+					  loadmodel=True,
 					  interpolation=False,
-					  metrics=False,
+					  metrics=True,
 					  heat_map=False,
 					  latent_viz=False,
 					  metrics_k=50,
-					  metrics_type='linear',
-					  interpol_types={'stochSMC':1,'stoch':1,'linear':1},
+					  metrics_type='stoch',
+					  interpol_types={'stochSMC':3,'stoch':0,'linear':0},
 					  thresh=0.1,
 					  epochs=30,
 					  batch_size=64,
@@ -66,7 +66,7 @@ config = model_config(dataset='lines',
 					  hm_ymax=2,
 					  hm_steps=51,
 					  out_dir='/out',
-					  load_dir=r'/Users/erikpiscator/Repositories/RandomInterpolationGAN/DCGAN_Interpoaltion_Keras/out/20210224-1456_lines/models/models_2ep')
+					  load_dir=r'/Users/erikpiscator/Repositories/RandomInterpolationGAN/DCGAN_Interpoaltion_Keras/out/20210419-1910_lines/models/models_1ep')
 
 
 if config.loadmodel:
@@ -81,19 +81,26 @@ else:
 
 	print_training_setup(config)
 	dcgan = model.dcgan(config)
-	print(dcgan.G.summary())
-	print(dcgan.D.summary())
+	#print(dcgan.G.summary())
+	#print(dcgan.D.summary())
 	dcgan.train(config)
 
 if config.interpolation:
 
 	nmr_interpols = sum(config.interpol_types.values())
 	paths = np.zeros((nmr_interpols,config.z_dim,config.int_steps))
+
 	#z0 = np.array([[],[]])
 	#zT = np.array([[],[]])
 
-	z0 = np.array([[-1.5],[-1.5]])
-	zT = np.array([[1],[1]])
+	#z0 = np.array([[-1.5],[-1.5]])
+	#zT = np.array([[1],[1]])
+
+	z0 = np.zeros((config.z_dim,1))
+	z0[1] = 8
+
+	zT = np.zeros((config.z_dim,1))
+	zT[4] = 8
 
 	j = 0
 	for key in config.interpol_types.keys():
@@ -129,6 +136,34 @@ if config.latent_viz:
 	latent_visualization(config,G)
 
 
+"""
+z = np.zeros((config.z_dim,1))
+z[1] = 8
+
+#z = get_valid_code(GAN, config)
+
+#z = (z/np.linalg.norm(z))*8
+
+
+x = G.predict(z.T)
+
+score = D.predict(x)
+
+print(score)
+
+
+plt.figure(figsize=(1, 1))
+
+im = plt.imshow(x[0,:,:,0], cmap='gray')
+
+filepath = '/Users/erikpiscator/Repositories/RandomInterpolationGAN/DCGAN_Interpoaltion_Keras/out/20210419-1910_lines/interpolation/test'
+
+plt.savefig(filepath)
+plt.close()
+
+
+
+"""
 
 
 

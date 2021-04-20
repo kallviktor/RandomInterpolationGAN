@@ -24,6 +24,7 @@ import numpy as np
 import scipy.spatial
 from lines import draw_line
 from interpolation import linear_interpol, stochastic_interpol, stochasticSMC_interpol
+from interpolations_help_fcns import get_valid_code
 
 
 def closest_line(query_lines, metric='cosine'):
@@ -124,8 +125,14 @@ def metrics(G,D,GAN,config):
 
         print('Interpolation {}/{}.'.format(i+1,config.metrics_k))
 
-        z0 = np.array([[],[]])
-        zT = np.array([[],[]])
+        #z0 = np.array([[],[]])
+        #zT = np.array([[],[]])
+
+        z0 = get_valid_code(GAN, config)
+        z0 = (z0/np.linalg.norm(z0))*np.sqrt(config.z_dim)
+
+        zT = get_valid_code(GAN, config)
+        zT = (zT/np.linalg.norm(zT))*np.sqrt(config.z_dim)
 
         if config.metrics_type == 'linear':
             path,_,_ = linear_interpol(config,z0,zT)

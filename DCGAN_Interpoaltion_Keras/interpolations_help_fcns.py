@@ -69,6 +69,7 @@ def khat_cov(tmat, smat, T):
     T2 = num / denom
     
     return T1 + T2
+
 """
 from interpolations_help_fcns import ker, khat_cov, muhat_mean
 from numpy import linspace, array, zeros, tile, matmul, kron, eye, ravel, ones

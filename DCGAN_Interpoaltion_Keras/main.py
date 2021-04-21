@@ -27,12 +27,12 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 config = model_config(dataset='lines',
 					  loadmodel=True,
 					  interpolation=False,
-					  metrics=True,
+					  metrics=False,
 					  heat_map=False,
 					  latent_viz=False,
 					  metrics_k=50,
 					  metrics_type='stoch',
-					  interpol_types={'stochSMC':3,'stoch':0,'linear':0},
+					  interpol_types={'stochSMC':0,'stoch':0,'linear':1},
 					  thresh=0.1,
 					  epochs=30,
 					  batch_size=64,
@@ -66,7 +66,7 @@ config = model_config(dataset='lines',
 					  hm_ymax=2,
 					  hm_steps=51,
 					  out_dir='/out',
-					  load_dir=r'/Users/erikpiscator/Repositories/RandomInterpolationGAN/DCGAN_Interpoaltion_Keras/out/20210419-1910_lines/models/models_1ep')
+					  load_dir=r'/Users/erikpiscator/Repositories/RandomInterpolationGAN/DCGAN_Interpoaltion_Keras/out/20210224-1456_lines/models/models_2ep')
 
 
 if config.loadmodel:
@@ -76,6 +76,12 @@ if config.loadmodel:
 	G = load_model(config,'G_')
 	GAN = load_model(config,'GAN_')
 	print_loading_complete()
+	
+	print('G')
+	print(G.summary())
+	print('D')
+	print(D.summary())
+	
 
 else:
 
@@ -93,14 +99,14 @@ if config.interpolation:
 	#z0 = np.array([[],[]])
 	#zT = np.array([[],[]])
 
-	#z0 = np.array([[-1.5],[-1.5]])
-	#zT = np.array([[1],[1]])
+	#z0 = np.array([[10],[-10]])
+	#zT = np.array([[-10],[10]])
 
 	z0 = np.zeros((config.z_dim,1))
 	z0[1] = 8
 
 	zT = np.zeros((config.z_dim,1))
-	zT[4] = 8
+	zT[1] = -8
 
 	j = 0
 	for key in config.interpol_types.keys():

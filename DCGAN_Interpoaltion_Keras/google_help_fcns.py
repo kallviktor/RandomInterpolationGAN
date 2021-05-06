@@ -47,6 +47,7 @@ def closest_line(query_lines, metric='cosine'):
     # Produce vectorized versions of both for use with scipy.spatial
     flat_query = query_lines.reshape(query_lines.shape[0], -1)
     flat_all = all_lines.reshape(all_lines.shape[0], -1)
+
     # Compute pairwise distance matrix of query lines with all valid lines
     distances = scipy.spatial.distance.cdist(flat_query, flat_all, metric)
     min_dist_idx = np.argmin(distances, axis=-1)
@@ -96,7 +97,7 @@ def line_eval(interpolated_lines):
     min_dist, angles = closest_line(
         interpolated_lines.reshape((-1,) + original_shape[2:]))
     mean_distance = np.mean(min_dist)
-    #std_distance = np.
+    
     smoothness_scores = smoothness_score(
         angles.reshape(original_shape[0], original_shape[1]))
     nan_scores = np.isnan(smoothness_scores)

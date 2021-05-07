@@ -4,6 +4,7 @@ from numpy.random import randint, choice
 from collections import Counter
 from interpolations_help_fcns import *
 from math import dist
+from google_help_fcns import line_eval
 
 def stochasticSMC_interpol(generator, discriminator, DoG, config,z0=None,zT=None):
     
@@ -263,9 +264,40 @@ def stochasticSMC_interpol(generator, discriminator, DoG, config,z0=None,zT=None
     
     # interpol is initialized as 0:th sheet of PartsPaths (this way the interpolation contains the correct start and end points),
     # data type numpy.array shape = (zDim, N)
+    
+
+    """
+
+    
+    mean_dist=1000
+    mean_smoothness = 1000
+    idx = 0
+
+    _,unique_idx = np.unique(PartsPaths[:,:,0:N-7], axis=0,return_index=True)
+    print('len: ',len(unique_idx))
+    #print(unique_idx[0:10])
+    #print(PartsPaths.shape)
+    for j in unique_idx:
+
+        cur_path = PartsPaths[j,:,:]
+
+        path_vis = generator.predict(cur_path.T)
+
+        mean_dist_new,mean_smoothness_new = line_eval(path_vis[np.newaxis,:])
+        print(mean_smoothness_new)
+        if mean_smoothness_new < mean_smoothness:
+            mean_smoothness = mean_smoothness_new
+            mean_dist = mean_dist_new
+            idx = j
+
+    #rand_path = randint(n_parts)
+    interpol = PartsPaths[idx,:,:]
+    print('Mean dist: ',mean_dist)
+    print('Mean smooth: ',mean_smoothness)
+
+    """
     rand_path = randint(n_parts)
     interpol = PartsPaths[rand_path,:,:]
-    
     """
     for step in range(N-2):
         

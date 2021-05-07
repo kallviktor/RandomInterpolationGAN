@@ -23,7 +23,7 @@ from __future__ import print_function
 import numpy as np
 import scipy.spatial
 from lines import draw_line
-from interpolation import linear_interpol, stochastic_interpol, stochasticSMC_interpol
+#from interpolation import linear_interpol, stochastic_interpol, stochasticSMC_interpol
 from interpolations_help_fcns import get_valid_code
 
 

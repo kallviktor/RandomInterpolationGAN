@@ -516,6 +516,51 @@ def latent_visualization(config,G):
     plt.savefig(filepath)
     plt.close()
 
+
+def latent_visualization_64(config,G):
+
+    if not os.path.exists(config.out_dir):
+        os.makedirs(config.out_dir)
+
+    if not os.path.exists(config.save_dir):
+        os.makedirs(config.save_dir)
+
+    if not os.path.exists(config.latvis_dir):
+        os.makedirs(config.latvis_dir)
+
+    xmin = config.hm_xmin
+    xmax = config.hm_xmax
+    ymin = config.hm_ymin
+    ymax = config.hm_ymax
+    steps = config.hm_steps
+
+    skip = int((steps-1)/10)
+
+
+    z1 = linspace(xmin, xmax, steps)
+    z2 = linspace(ymax, ymin, steps)
+
+    zx, zy = meshgrid(z1, z2)
+
+    zx = zx.reshape(1,-1)
+    zy = zy.reshape(1,-1)
+
+    zbatch = zeros((steps*steps,config.z_dim))
+    zbatch[:,0] = zx
+    zbatch[:,1] = zy
+
+
+    imgs = G.predict(zbatch).reshape(steps, steps, 32, 32)
+
+
+    plt.figure(figsize=(10, 10))
+    plt.imshow(block(list(map(list, imgs))),cmap='gray',extent=[xmin,xmax,ymin,ymax])
+
+    filename = '/latent_vis_{}'.format(config.hm_steps)
+    filepath = dynamic_filepath(config.latvis_dir,filename)
+    plt.savefig(filepath)
+    plt.close()
+
 def latent_inter(config, paths, G):
 
     if not os.path.exists(config.out_dir):

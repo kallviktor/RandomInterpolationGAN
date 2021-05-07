@@ -156,8 +156,8 @@ class dcgan(object):
 				G_loss = train_G(config,self.GAN,batch_z,batch_yg)
 
 				#Update G network twice for better convergence according to https://github.com/carpedm20/DCGAN-tensorflow
-				batch_z, batch_yg = generate_latent_codes(config)
-				G_loss = train_G(config,self.GAN,batch_z,batch_yg)
+				#batch_z, batch_yg = generate_latent_codes(config)
+				#G_loss = train_G(config,self.GAN,batch_z,batch_yg)
 
 				#Save losses to vectors in order to plot
 				D_loss_vec.append(D_loss)
